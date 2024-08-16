@@ -1,0 +1,21 @@
+---
+title: 'Working with European Union Law as Data'
+output: html_document
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+## Exercises
+
+1. Download the 15 documents from directory: '12 Energy' which are in force. Examine a term frequency and show the 10 most common words in the form of worldcloud and barplot.
+
+2. Download all the regulations from the directory: '09 Taxation'. Restrict this textdata to legal acts which are in force and created since 2020. Then examine the $tf$-$idf$.
+
+3. Download all the case-laws from the directory: '15 Environment, consumers and health protection'. For each year show the most frequent word.
+
+4. Download 20 recommendations For each recommendation title, show EuroVoc keywords. Plot the obtained results grouping them accordingly to the celex identifier..
+
+5. Solve exercices from [this page](https://regexone.com).

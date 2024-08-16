@@ -1,0 +1,25 @@
+---
+title: "Using maps in R"
+output: html_document
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+## Exercises
+
+1. Using dataset `hills` from `MASS` package, show the linear dependence of distance (`dist`) on time (`time`) and climbing (`climb`) on time. Draw regression lines with data on plot side by side. Predict the `time` value, when `dist` is 25 and `climb` is 6000.
+
+2. Plot a world map which shows PTS score from 2020. Each organization on separate plot.
+
+3. Plot a world map which shows SVS score from 2016.
+
+4. The `votes.repub` dataset from the `cluster` package contains information about the percentage of votes cast for Republicans in U.S. presidential elections from 1856 to 1976. Show on a map how the votes were distributed in 1964 and 1976 and compare them (the graphs must be side by side). \
+**Note:** **Remember that combining is case sensitive. You can use the `tolower()` function.** \
+**Note:** **To make two graphs side by side you can use the `grid.arrange()` function from the `gridExtra` package.**
+
+5. Load the [dataset](https://covid19.who.int/WHO-COVID-19-global-data.csv). For each country, count the sum of deaths and cases, using the `group_by()` function. Then create a map for the sum of deaths and change the gradient color from yellow to red and remove the axes. Do the same for the sum of cases only change the gradient color from light green to dark green. Mark in gray the countries for which there is no data.
+
+6. `ISLR` package contains dataset `Default` where we have data for 10 000 credit card users. Check out this dataset using `?Default` function. Predict a probability of default when customer is not a student, his balance is 1400 and his income is 2000.

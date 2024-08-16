@@ -1,0 +1,16 @@
+---
+title: "Measuring human rights in Europe"
+output: html_document
+---
+
+## Exercises
+
+1. To perform good analysis, many times you have to get to know how a given indicator works. In these exercises we are going to use a data about PTS (the Political Terror Scale) and SVS (the Societal Violence Scale). Make a research what they are, how they are defined, when they are used, who uses them and why.
+
+2. The differences between PTS scores assigned by different organizations are significant? What about difference between countries and years? [dataset](https://www.politicalterrorscale.org/Data/Download.html)
+
+3. The difference between SVS scores between year is significant? Assume that $n*=n$ and $*=NA$, where $n$ is a SVG score.
+
+4. Examine the relationship between old and new prices (dataset `homedata` from `UsingR` package). Old price is the independent variable. Predict the home price in the year 2000 that was worth 75 000 $ in 1970.
+
+5. Dataset `Salaries` from `carData` package contains the 2008-09 nine-month academic salary for Assistant Professors, Associate Professors and Professors in a college in the U.S. Create a regression model and see which variables affect the dependent variable `salary`. Predict `salary` value for your selected variable values.
