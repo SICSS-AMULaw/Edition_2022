@@ -13,3 +13,4 @@ Małgorzata Jurczak, Anna Hołdyńska, Mateusz Gruszczyński
 
 Learn more about our first edition on the [official website](https://sicss.io/2022/amu-law/).
 
+During this edition, we primarily used R and worked in the RStudio IDE.
