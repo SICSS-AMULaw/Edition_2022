@@ -1,0 +1,175 @@
+---
+title: "Prediction - Exercises"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+date: 14th June 2022
+author: Anna Hołdyńska
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+## Exercises and Answers
+
+1. **Dataset `cars` contains two columns: speed (`speed`) and stopping distance (`dist`).** \
+**- draw a plot to see how the data looks** \
+**- create a linear regression model and add regression line to plot** \
+**- create a quadratic regression model and add regression line to plot** \
+**- consider which model is better and predict `dist` value, when `speed` is 40.**
+
+Proposed answer:
+
+```{r message = FALSE, error = FALSE, warning = FALSE, out.width="55%"}
+?cars
+
+plot(cars, pch = 21)
+
+# linear regression model
+model_lin <- lm(dist ~ speed, data = cars)
+abline(model_lin, col = "darkred", lwd = 2)
+summary(model_lin)
+
+# quadratic regression model
+model_qua <- lm(dist ~ speed + I(speed^2), data = cars)
+coefs <- coef(model_qua)
+curve(coefs[1] + coefs[2] * x + coefs[3] * x^2,
+      add = TRUE,
+      col = "blue",
+      lwd = 2)
+
+# adding legend to plot
+legend("topleft", 
+       legend = c("linear regression model", "quadratic regression model"), 
+       col = c("darkred", "blue"), 
+       lty = 1, 
+       lwd = 2)
+
+summary(model_qua)
+
+# looking at the R^2, quadratic model is better
+
+# prediction
+predict(model_qua, list(speed = 40))
+```
+
+2. **Using dataset `Boston` from `MASS` package, fit a polynomial regression model.** \
+**- draw a plot to see how the data looks (choose x value as `medv` and y as `lstat`)** \
+**- create a polynomial regression models (`lstat` is dependent variable and `medv` is independent variable) with different levels of the polynomial. In your opinion, which is the best? (use measures from lecture)** \
+**- using the best polynomial regression model, predict `lstat` value where `medv` = 50.04**
+
+Proposed answer:
+
+```{r message = FALSE, error = FALSE, warning = FALSE, out.width="55%"}
+#install.packages("MASS")
+library(MASS)
+?Boston
+
+plot(Boston$medv, Boston$lstat)
+
+# 2th level
+model1 <- lm(lstat ~ medv + I(medv^2), data = Boston)
+coefs <- coef(model1)
+curve(coefs[1] + coefs[2] * x + coefs[3] * x^2,
+      add = TRUE,
+      col = "darkred",
+      lwd = 2)
+summary(model1)
+
+# 3th level
+model2 <- lm(lstat ~ medv + I(medv^2) + I(medv^3), data = Boston)
+coefs <- coef(model2)
+curve(coefs[1] + coefs[2] * x + coefs[3] * x^2 + coefs[4] * x^3,
+      add = TRUE,
+      col = "blue",
+      lwd = 2)
+summary(model2)
+
+# 4th level
+model3 <- lm(lstat ~ medv + I(medv^2) + I(medv^3) + I(medv^4), data = Boston)
+coefs <- coef(model3)
+curve(coefs[1] + coefs[2] * x + coefs[3] * x^2 + coefs[4] * x^3 + coefs[5] * x^4,
+      add = TRUE,
+      col = "green",
+      lwd = 2)
+legend("topright", 
+       legend = c("2th level", "3th level", "4th level"), 
+       col = c("darkred", "blue", "green"), 
+       lty = 1, 
+       lwd = 2)
+summary(model3)
+
+# In my opinion, 2th level is sufficient.
+# There are very small differences at coefficient R^2.
+
+# prediction
+predict(model1, list(medv = 50.04))
+```
+
+3. **Use dataset `marketing` from `datarium` package. Read more information about this dataset (`?marketing`). Create multiple regression model using method 1 or method 2 from the lecture. Predict `sales` value for your selected variable values.**
+
+Proposed answer:
+
+```{r message = FALSE, error = FALSE, warning = FALSE}
+# install.packages("datarium")
+library(datarium)
+?marketing
+
+# multiple regression model
+model <- lm(sales ~ ., data = marketing)
+summary(model)
+
+# We use method 2 from the lecture
+model2 <- step(model)
+summary(model2) # the best model
+
+# prediction
+newdata = data.frame(youtube = 150,
+                     facebook = 25)
+predict(model2, newdata)
+```
+
+4. **Let's more predict. In chapter Logistic Regression is example: Fair's Extramarital Affairs Data. Take the best chosen model and predict the probabilities of having affair for these new data:** \
+**- `rating` is 3, `age` is 20, `yearsmarried` is 2, `gender` is male and `religiousness` is 1** \
+**- `rating` is 5, `age` is 80, `yearsmarried` is 10 or 20, `gender` is female, religiousness` is 3**
+
+Proposed answer:
+
+```{r message = FALSE, error = FALSE, warning = FALSE}
+library(AER)
+data(Affairs)
+library(dplyr)
+?Affairs
+
+Affairs <- Affairs %>% 
+  mutate(ynaffairs = ifelse(affairs > 0, 1, 0))
+
+model_glm <- glm(ynaffairs ~ gender + age +
+                   yearsmarried + children + 
+                   religiousness + education + 
+                   occupation + rating,
+                 data = Affairs, 
+                 family = 'binomial')
+model_glm2 <- step(model_glm)
+
+newdata1 <- data.frame(rating = 3,
+                      age = 20,
+                      yearsmarried = 2,
+                      religiousness = 1,
+                      gender = "male")
+predict(model_glm2, 
+        newdata = newdata1, 
+        type = "response")
+
+newdata2 <- data.frame(rating = 5,
+                      age = 80,
+                      yearsmarried = c(10, 20),
+                      religiousness = 3,
+                      gender = "female")
+predict(model_glm2, 
+        newdata = newdata2, 
+        type = "response")
+```

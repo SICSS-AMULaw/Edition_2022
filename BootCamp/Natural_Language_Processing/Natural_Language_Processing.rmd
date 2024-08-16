@@ -1,0 +1,1051 @@
+---
+title: "Natural Language Processing"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+date: 15th June 2022
+author: Jędrzej Wydra
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width = 9, fig.height = 6, fig.align = "center")
+```
+
+### Table of Contents
+
+***
+
+1. [**Introduction**](#Introduction)
+
+2. [**Stringr package**](#Stringr_package)
+  + [Regex](#Regex)
+  + [Detect Matches](#Detect_Matches)
+  + [Subset Strings](#Subset_Strings)
+  + [Manage Lengths](#Manage_Lengths)
+  + [Mutate Strings](#Mutate_Strings)
+  + [Join and Split](#Join_and_Split)
+  + [Order Strings](#Order_Strings)
+
+3. [**Web-scraping**](#Web-scraping)
+  + [Web-scrape specific element](#Web-scrapping_specific_element)
+  + [Web-scrape class of elements](#Web-scrapping_class_of_elements)
+  
+4. [**Wordcloud**](#Wordcloud)
+  + [Term frequency](#Term_Frequency)
+  + [Plotting Wordcloud](#Plotting_Wordcloud)
+  
+5. [**Eurlex package**](#Eurlex_package)
+  
+6. [**Inverse term frequency**](#Inverse_term_frequency)
+
+7. [**Topic Modeling**](#Topic_Modeling)
+
+8. [**Exercises**](#Exercises)
+
+9. [**References**](#References)
+  
+***
+
+# <a id="Introduction"></a>Introduction
+
+We start from bad news… 
+
+Natural Language Processing is probably the hardest part of the boot camp.
+
+Computers don’t understand human language. They didn’t, they don’t and probably they won’t. However, social scientists sometimes face problems which are linked to very routine and boring activities and moreover, they must consider huge amount of text-data. For example, analyzing thousands of surveys, hundreds of legal acts and so on. Is there any possibility to automatize this work? Luckily, yes, there is. A computer still can be a priceless tool for a social scientist who works with words and text, but the user must tell that computer exactly what it should do, but in a way, which it can understand.
+
+There are two types of languages, of course both are invented by humans, but one group is natural, another is artificial.
+
+1.	Natural languages are languages which are used by humans in normal communications, obvious examples are English, Polish, French, German, Spanish, Chinese and so on. Such languages are poorly understood by computer.
+2.	Formal languages are a group of artificial languages which are used in very specific situations which require precise and clear statements or instructions. The language of mathematics is a very good example of formal language, the others are all programming languages like C++, Python or R.
+
+Programming languages have one great advantage, they can be relatively easily understood by both humans and computers.
+
+In general meaning, natural language processing (NLP) is formulating problems of natural language analysis in terms of formal languages and algorithms to obtain synthetic results which are easy to understand.
+It is worth to notice that NLP techniques are quite good if, and only if, you have to examine big text-data in a short time. It means, when you need to know what given book is about, just read it. It is the best way. But, if you need to know what hundreds of books are about, then you still should just read them. However, very often you could simply have no time to do that. In such situation NLP is a very good choice.
+
+It is essential to remember, results of NLP techniques are always worse than reading and analyzing text in a traditional way, however traditional reading is impractical (or even impossible) when dozes of piles of documents wait for your attention. 
+
+***
+
+# <a id="Stringr_package"></a>Stringr package
+
+A couple of functions which are useful in text-data analyses are implemented in the base package. However, we are going to introduce a package providing some more advanced functionalities – the `stringr` package. 
+
+We encourage to use a [cheat sheet](https://evoldyn.gitlab.io/evomics-2018/ref-sheets/R_strings.pdf).
+
+In R, there are a few types of structures which can be used to keep data. The most important type is a vector. To be honest, in R, everything is some variation of a vector.
+
+One vector can contain just one class of data at the same time. Two main classes are `numeric` and `character`. Processing of numbers is quite easy and intuitive, everyone had math class at school so everyone can do some basic operations on numbers. In addition, in R, the respective functions are very intuitive.
+
+Working with text (data of class `character`) is a little bit harder. In case of numbers, we have natural operations like addition, multiplication and so on. In case of text, we don’t. But we still can do something. The great part of mathematics – the set theory – provides some operations which can be useful in case of text-data. These operations are union, intersection, and difference. We skip their formal definitions, and we focus on how to use them in R. It is quite easy, because `stringr` package implements them and their combinations in a very nice way.
+
+Now, we are going to go through some examples of useful functions from `stringr` package. All these functions are briefly presented in the aforementioned [cheat sheet](https://evoldyn.gitlab.io/evomics-2018/ref-sheets/R_strings.pdf).
+
+Again, one bad news. Usage of `stringr` package requires some skills in pattern recognition. As I said, we have to tell the computer what it exactly should do. I mean, we have to see what and how repeats in text. At the beginning of your adventure with NLP, it can be hard, but it gets easier with practice.
+
+### <a id="Regex"></a>Regex
+
+The regular expressions, regex for short, are a basic and useful tool in the natural language processing. Natural languages are (in limited way) quite regular. Very often, short expressions (basically even parts of words) appear in a text in a repetitive way. Because of that you can find some patterns in a text data. Thanks to R you can identify them and use in code to conduct some analyses
+
+The simplest example of regex is a whitespace, which is described by `\\s` in `stringr` package.
+Cheat sheet of `stringr` package proposes friendly function which shows how regexes work.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+library(stringr)
+see <- function(rx) str_view_all("abc ABC 123\t.!?\\(){}\n", rx)
+see("\\.")
+see("\\s")
+see("\\!")
+see("\\?") 
+see("\\?") 
+see(".")
+see("\\d")
+see("\\w")
+```
+
+This is how R sees some patterns in a text data. Unfortunately, there is no a good instruction or a handbook of how to learn use regexes. It requires some skills in pattern recognition, which usually come with experience.
+
+Information how to describe regexes like whitespaces, digits and so on is available in [cheat sheet](https://evoldyn.gitlab.io/evomics-2018/ref-sheets/R_strings.pdf). 
+
+
+### <a id="Detect_Matches"></a>Detect Matches
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE, include = FALSE}
+library(stringr)
+library(tidytext)
+library(dplyr)
+
+data <- c("texts")
+str_sub(data, 4L, -1L)
+
+article4 <- c("Article 4
+Budget
+1.   The financial envelope for the implementation of the EMFAF for the period from 1 January 2021 to 31 December 2027 shall be EUR 6108000000 in current prices.
+2.   The part of the financial envelope allocated to the EMFAF under Title II of this Regulation shall be implemented under shared management in accordance with Regulation (EU) 2021/1060 and Article 63 of the Financial Regulation.
+3.   The part of the financial envelope allocated to the EMFAF under Title III of this Regulation shall be implemented either directly by the Commission in accordance with point (a) of Article 62(1) of the Financial Regulation or within the framework of indirect management in accordance with point (c) of Article 62(1) of that Regulation.
+")
+
+text_data <- unnest_tokens(data.frame(c(1),article4), word, article4, token = "ngrams", n = 1)$word
+
+text_data_2 <- c(
+  "Article 1
+Subject matter
+This Regulation lays down general rules for the implementation by the Union of a multiannual recovery plan for swordfish (Xiphias gladius) in the Mediterranean Sea (‘Mediterranean swordfish’) adopted by ICCAT, starting from 2017 and continuing until 2031.",
+  "Article 2
+Scope
+This Regulation applies to:
+(a)
+Union fishing vessels, and Union vessels engaged in recreational fisheries, which:
+(i)
+catch Mediterranean swordfish; or
+(ii)
+tranship or carry on board, including outside the ICCAT Convention area, Mediterranean swordfish;
+(b)
+third country fishing vessels, and third country vessels engaged in recreational fisheries, which operate in Union waters and which catch Mediterranean swordfish;
+(c)
+third country vessels which are inspected in Member States ports and which carry on board Mediterranean swordfish or fishery products originating from Mediterranean swordfish that have not been previously landed or transhipped at ports.",
+  "Article 3
+Objective
+By way of derogation from Article 2(2) of Regulation (EU) No 1380/2013, the objective of this Regulation is to achieve a biomass of Mediterranean swordfish corresponding to MSY by 2031, with at least a 60 % probability of achieving that objective.",
+  "Article 4
+Relationship to other Union law
+This Regulation applies in addition to the following Regulations or, where those Regulations so provide, by way of derogation therefrom:
+(a)
+Regulation (EC) No 1224/2009;
+(b)
+Regulation (EU) 2017/2403 of the European Parliament and of the Council (14);
+(c)
+Regulation (EU) 2017/2107.",
+  "Article 5
+Definitions
+For the purposes of this Regulation, the following definitions apply:
+(1)
+‘fishing vessel’ means any vessel equipped for commercial exploitation of marine biological resources;
+(2)
+‘Union fishing vessel’ means a fishing vessel flying the flag of a Member State and registered in the Union;
+(3)
+‘ICCAT Convention area’ means all waters of the Atlantic Ocean and adjacent seas;
+(4)
+‘Mediterranean Sea’ means maritime waters of the Mediterranean to the East of line 5°36′ West;
+(5)
+‘CPCs’ means Contracting Parties to the ICCAT Convention and Cooperating non-Contracting Parties, Entities or Fishing Entities;
+(6)
+‘fishing authorisation’ means an authorisation issued in respect of a Union fishing vessel entitling it to carry out specific fishing activities during a specified period, in a given area or for a given fishery under specific conditions;
+(7)
+‘fishing opportunity’ means a quantified legal entitlement to fish, expressed in terms of catches or fishing effort;
+(8)
+‘stock’ means a marine biological resource that occurs in a given management area;
+(9)
+‘fishery products’ means aquatic organisms resulting from any fishing activity or products derived therefrom;
+(10)
+‘discards’ means catches that are returned to the sea;
+(11)
+‘recreational fisheries’ means non-commercial fishing activities exploiting marine biological resources for recreation, tourism or sport;
+(12)
+‘vessel monitoring system data’ means data on the fishing vessel identification, geographical position, date, time, course and speed transmitted by satellite-tracking devices installed on board fishing vessels to the fisheries monitoring centre of the flag Member State;
+(13)
+‘landing’ means the initial unloading of any quantity of fisheries products from on board a fishing vessel to land;
+(14)
+‘transhipment’ means the unloading of all or any fisheries products on board a vessel to another vessel;
+(15)
+‘chartering’ means an arrangement by which a fishing vessel flying the flag of a Member State is contracted for a defined period by an operator in either another Member State or a third country without a change of flag;
+(16)
+‘longlines’ means a fishing gear which comprises a main line carrying numerous hooks on branch lines (snoods) of variable length and spacing depending on the target species;
+(17)
+‘hook’ means a bent, sharpened piece of steel wire;
+(18)
+‘rod and line’ means a fishing-line placed in a rod used by anglers and wound on a turning mechanism (reel) used to wind the line."
+)
+
+text_data_2 <- str_replace_all(text_data_2,"\n"," ")
+
+```
+
+Assume we have [following text data](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=uriserv:OJ.L_.2021.247.01.0001.01.ENG). 
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE,include=FALSE}
+article4 <- str_replace_all(article4,"\n"," ")
+```
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+article4
+```
+
+In R we have it in a form of a vector, where each element is one word from above text.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+text_data
+```
+
+The four functions provide functionalities to detect patterns in text data.
+
+In some situations we would like to know if given element fulfills given pattern. In English, the word “the” is very common, so let’s try to check if we have it in our data.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+str_detect(string = text_data, pattern = "the")
+```
+
+The result is a logical vector, when there is a`TRUE` value on - for example - 5th place, it means, that 5th word (5th element in text_data) is our word "the".
+
+When you want to get positions of searched pattern you should use a different function.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+str_which(string = text_data, pattern = "the")
+```
+
+You can count how many times given pattern occurs in each element. Let’s check how many digit is in every element of `text_data`.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+str_count(string = text_data, pattern = "\\d")
+```
+
+Assume we have more complex data, where each element isn’t a single word, but a whole [article](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32019R1154).
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+text_data_2
+```
+
+And now, we would like to know how many times and exactly where pattern "ICCAT" occurs.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+str_locate_all(string = text_data_2, pattern = "ICCAT")
+```
+
+The result means that "ICCAT" occurs in first, second and fifth article on given positions, but in article five it occurs twice.
+
+Sometimes it is enough to find just first pattern match.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+str_locate(string = text_data_2, pattern = "Article \\d")
+```
+
+### <a id="Subset_Strings"></a>Subset Strings
+
+Sometimes you may want to restrict your data to some subset which matches given pattern. There are a few ways to do that.
+
+You can set the range and get elements from given positions. For example, I want just third, fourth and fifth character from each element from `text_data`.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+str_sub(string = text_data, start = 3L, end = 5L)
+```
+
+If there is `""`, it means that length of these element is shorter than three.
+
+You may want to obtain just words which length is four.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+str_subset(string = text_data, pattern = "\\b....\\b")
+```
+
+But this function removes elements which don’t match given pattern. Sometimes you may want to get result which is the vector of the same length as input data.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+str_extract(string = text_data, pattern = "\\b....\\b")
+```
+
+### <a id="Manage_Lengths"></a>Manage Lengths
+
+The functions from previous two paragraphs are kind of extension of popular ctrl+f (cmd+f) functionality known from PC (Mac). Now, we are going to introduce some functions which change length of text-data.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+str_length(string = text_data_2)
+```
+
+By above function you can change a character vector to a numeric vector which elements are lengths (number of characters) of elements of an input vector.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+str_trunc(string = text_data_2, width = 50)
+```
+
+Next function shortens length. Each element of vector is truncated to given length, but if input element is longer, then the output element contains `...`.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+str_pad(string = text_data, width = 5, side = "left", pad = "-")
+```
+
+It is also possible to make something opposite. To pad strings to given length. Longer vectors don’t change, shorter ones get as many characters (defined in argument `pad`) as it lacks to given length.
+
+### <a id="Mutate_Strings"></a>Mutate Strings
+
+There are five main functions to mutate character vectors. 
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+str_replace(string = text_data_2, pattern = "\\s", replacement = "_") %>%
+  str_trunc(width = 50)
+```
+
+To make result more readable, I used function `str_trunc(width = 50)` to display just first 50 characters.
+
+The above function replaces first occurrence (in each element) of a given pattern by value of replacement argument (`//s` means whitespace).
+
+The following function works similarly, but replaces all of occurrences.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+str_replace_all(string = text_data_2, pattern = "\\s", replacement = "_") %>%
+  str_trunc(width = 50)
+```
+
+Maybe you want to just remove given pattern? Then you can use the following function.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+str_remove(string = text_data_2, pattern = "\\s") %>%
+  str_trunc(width = 50)
+```
+
+The above function removes just the first pattern match. The function `str_remove_all()` removes all matches.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+str_remove_all(string = text_data_2, pattern = "\\s") %>%
+  str_trunc(width = 50)
+```
+
+Two more functions, `str_to_lower()` and `str_to_upper()` work analogically. They change upper case to lower case, and lower case to upper case, respectively.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+str_to_upper(text_data)
+```
+
+### <a id="Join_and_Split"></a>Join and Split
+
+You can join one vector into one element or two (or more) vectors into one vector of the same length using the same function.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+str_c(text_data, collapse = " ")
+```
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+str_c(1:length(text_data), text_data, sep = "-")
+```
+
+Analogically it is possible to split vector into `n` vectors.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+str_split_fixed(string = str_trunc(string = text_data_2, width = 50), pattern = "\\s", n = 4)
+```
+
+### <a id="Order_Strings"></a>Order Strings
+
+In `stringr` package there are two functions which allow to sort elements of a character vector. We go through them in a slightly different way. By solving the following exercise.
+
+**Change `text_data_2` into a vector containing just word “article” and respective number in each element, then randomly change order of elements. Finally, order output vector.**
+
+Of course, such exercise is impractical, however, it allows to understand some algorithms.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+str_locate(string = text_data_2, pattern = "Article \\d")
+```
+
+In step zero, we should locate on which positions word “article” and respective number are.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+(stage1 <- str_sub(text_data_2, 1L, 9L))
+```
+
+In step one, we subset `text_data_2`.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+(stage2 <- stage1[sample(1:length(stage1), length(stage1))])
+```
+
+In step two, using superposition of functions `sample()` and `length()`, we generate a vector of indexes of `stage1` in random order. The result is a randomly ordered input vector.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+str_sort(stage2)
+```
+
+Function `str_sort()` sorts input vector. It is also possible to sort this vector by indexes.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+str_order(stage2)
+```
+
+Function `str_order` generates sorted vector of indexes. Using following formula we get the same result as previous.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+stage2[str_order(stage2)]
+```
+
+***
+
+# <a id="Web-scraping"></a>Web-scraping
+
+The Internet is a great source of text-data. The question is how to effectively get these data. By copying it out? Very time-consuming, so no. The web-scrapping is a technique which allows importing data from the Internet to R. Unfortunately, it requires some basic knowledge about html code.
+
+In R it is possible to web-scrape one specific element from website or all elements of given class.
+
+### <a id="Web-scrapping_specific_element"></a>Web-scrape specific element
+
+Let’s try to import [table of Members of the European Parliament by Member State and political group](https://www.europarl.europa.eu/meps/en/search/table) from MEPs European Parliament site.
+
+Firstly, we need to load package `rvest` and `dplyr`.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+library(rvest)
+library(dplyr)
+```
+
+Assign url-address to variable `url`.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+url <- "https://www.europarl.europa.eu/meps/en/search/table"
+```
+
+Using pipe operator send `url` to `read_html()`.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+url %>%
+  read_html()
+```
+
+This operation downloads whole webpage. For us, just one element is interesting, so specify it by `xpath`.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+url %>%
+  read_html() %>%
+  html_node(xpath='//*[@id="website-body"]/section/div/div/table')
+```
+
+To find `xpath` you should use option “expect element” in your web-browser.
+
+The last step is to tell R how it should open downloaded element. Of course, we want a table so this is what R shall do for us.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+url %>%
+  read_html() %>%
+  html_node(xpath='//*[@id="website-body"]/section/div/div/table') %>%
+  html_table(fill=TRUE)
+```
+
+In real life you need just two steps.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+url <- "https://www.europarl.europa.eu/meps/en/search/table"
+
+url %>%
+  read_html() %>%
+  html_node(xpath='//*[@id="website-body"]/section/div/div/table') %>%
+  html_table(fill=TRUE)
+```
+
+Or even just one.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+"https://www.europarl.europa.eu/meps/en/search/table" %>%
+  read_html() %>%
+  html_node(xpath='//*[@id="website-body"]/section/div/div/table') %>%
+  html_table(fill=TRUE)
+```
+
+The result would be the same, but the last version is not recommended by professional programmers.
+
+### <a id="Web-scrapping_class_of_elements"></a>Web-scrape class of elements
+
+Now, we are going to face a little bit more complex task. We want to download all legal acts from Eur-Lex which are linked to Nuclear energy, Safeguards and Energy, it means all acts from [here](https://eur-lex.europa.eu/search.html?CC_2_CODED=1240&name=browse-by%3Alegislation-in-force&type=named&CC_3_CODED=124030&displayProfile=allRelAllConsDocProfile&qid=1647776790437&CC_1_CODED=12&page=1).
+
+Previously, at the beginning we need some packages and to assign url-adress to variable `url`.
+
+```{r, eval = FALSE, warning = FALSE, message = FALSE}
+library(rvest)
+library(dplyr)
+
+url <- "https://eur-lex.europa.eu/search.html?CC_2_CODED=1240&name=browse-by%3Alegislation-in-force&type=named&CC_3_CODED=124030&displayProfile=allRelAllConsDocProfile&qid=1647776790437&CC_1_CODED=12"
+```
+
+To download all hyperlinks to legal acts from given url we can’t use xpaths as previous, because now, we have to get many elements of the same class. This interesting class is "#cellar_". You can find it by using “inspect element” in your web-browser. Then, R needs to know what to do with such elements. We want hyperlinks, which are hidden under the text, so we use the function ` html_attr('href') ` to get them.
+
+At the end of these step it is good to assign downloaded elements to same variable, here it is `links`.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+url %>%
+  read_html %>%
+  html_nodes("#cellar_") %>%
+  html_attr('href') -> links
+```
+
+Unfortunately, our links have an unnecessary dot at the beginning and lack a suffix "https://eur-lex.europa.eu".
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+links
+```
+
+Let’s fix it.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+(links <- str_c("https://eur-lex.europa.eu",str_remove(links, "\\."), sep = ""))
+```
+
+Now, we put our variable to a new vector.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+httplinks <- links
+```
+
+Almost done. We got hyperlinks, but only from first page. We can watch links to the rest pages and try to find some pattern.
+
+The good news is that links to second, third and fourth page are almost the same. They differs just in the last character.
+
+https://eur-lex.europa.eu/search.html?CC_2_CODED=1240&name=browse-by%3Alegislation-in-force&type=named&CC_3_CODED=124030&displayProfile=allRelAllConsDocProfile&qid=1647776790437&CC_1_CODED=12&page=2
+
+https://eur-lex.europa.eu/search.html?CC_2_CODED=1240&name=browse-by%3Alegislation-in-force&type=named&CC_3_CODED=124030&displayProfile=allRelAllConsDocProfile&qid=1647776790437&CC_1_CODED=12&page=3
+
+https://eur-lex.europa.eu/search.html?CC_2_CODED=1240&name=browse-by%3Alegislation-in-force&type=named&CC_3_CODED=124030&displayProfile=allRelAllConsDocProfile&qid=1647776790437&CC_1_CODED=12&page=4
+
+We can use this pattern and previous code to define a loop which downloads interesting links from all pages like that:
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+for(i in 2:4)
+{
+  url <- str_c("https://eur-lex.europa.eu/search.html?CC_2_CODED=1240&name=browse-by%3Alegislation-in-force&type=named&CC_3_CODED=124030&displayProfile=allRelAllConsDocProfile&qid=1647776790437&CC_1_CODED=12&page=",i,sep = "")
+  url %>%
+    read_html(url) %>%
+    html_nodes("#cellar_") %>%
+    html_attr('href') -> links
+  
+  links <- str_c("https://eur-lex.europa.eu",str_remove(links, "\\."), sep = "")
+  httplinks <- c(httplinks, links)
+}
+```
+
+Please remember, in the last line we have to use function `c()` in order to extend previously created vector `httplinks`, instead of assigning under it a new value in each iteration.
+
+Vector `httplinks` contains just hyperlinks to legal acts, but we want whole documents.
+
+Now, assign url address to a variable. 
+
+```{r, eval = FALSE, warning = FALSE, message = FALSE}
+url <- httplinks[1]
+```
+
+As previously, download element, now the proper class is ".oj-normal", and we need plain text, so we put it into function `html_text()`. To obtain the whole legal act as one element (not a vector) we put it into function `str_c(collapse=" ")` and assign to vector `text`.
+
+```{r, eval = FALSE, warning = FALSE, message = FALSE}
+ url %>% 
+    read_html() %>% 
+    html_nodes(".oj-normal") %>% 
+    html_text() %>% 
+    str_c(collapse=" ") -> text[1]
+```
+
+Unfortunately, on same pages there is a different html code for text of legal act and this generates error. Because of that we write a few lines of code to prevent this error.
+
+```{r, eval = FALSE, warning = FALSE, message = FALSE}
+ if(str_length(text[1])<2)
+  {
+    url %>%
+      read_html() %>%
+      html_nodes(".normal") %>%
+      html_text() %>%
+      str_c(collapse=" ") -> text[1]
+  }
+```
+
+Above code downloads just one legal act, we want all forty, so we put everything into a loop.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+text <- NULL
+for(i in 1:length(httplinks))
+{
+  url <- httplinks[i]
+  url %>% 
+    read_html() %>% 
+    html_nodes(".oj-normal") %>% 
+    html_text() %>% 
+    str_c(collapse=" ") -> text[i]
+  
+  if(str_length(text[i])<2)
+  {
+    url %>%
+      read_html() %>%
+      html_nodes(".normal") %>%
+      html_text() %>%
+      str_c(collapse=" ") -> text[i]
+  }
+}
+```
+
+Now, we get a vector of length forty, where each element is one legal act. We are going to use such data in the next chapter
+
+***
+
+# <a id="Wordcloud"></a>Wordcloud
+
+### <a id="Term_Frequency"></a>Term Frequency
+
+One of the simplest methods to analyze text-data is an examination of term frequency. Which and how many times the given term appears in a text could be very interesting information. However, even for this, text requires some preprocessing.
+
+We are going to use data from the previous chapter. There we had a vector of length forty, where each element was one legal act. To examine the simplest frequency we need a vector, where each element is a single word.
+
+In NLP a single word is called one-gram. This is a specific example of a more general construction – the n-grams. N-gram is a group of words, each n-gram contains n words. It could be useful in more advanced analysis. Here, we focus on one-grams.
+
+To transform our data to single words, we need a `tidytext` package.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+library(tidytext)
+```
+
+There is a function `unnest_tokens()` which can transform text to any n-grams. However, this function requires a data frame as an input argument, so we have to transform the vector from the previous section.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+text.data.set <- data.frame(no = rep("legal act",length(text)), text = text)
+```
+
+As a results we get data frame where first column is a type of document (legal act) and second column is the legal act. Now, we can transform data to one-grams.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+text.data.set %>%
+  unnest_tokens(word, text, token = "ngrams", n = 1)
+```
+
+To be honest, it is enough to examine frequency, but it is not fully correct. In English (just like in every language) there are plenty of words which has little meaning for NLP. They are mostly prepositions but classical examples are words “a” and “the”. These words are needed by humans in real conversation, but they also could make analysis vague. Luckily, we don’t have to know all such words. `Tidytext` package provides a nice dataset called `stop_words` which contains over thousand words. We should just remove these words from our dataset. The function `anti_join()` is very helpful to do that.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+text.data.set %>%
+  unnest_tokens(word, text, token = "ngrams", n = 1) %>%
+  anti_join(stop_words)
+```
+
+To perform analysis we need one more step. Please notice that now in text-data, words like “am”, “are”, “is”, “be” could appear. All of them have almost the same meaning but they would be treated as completely different objects. Of course, it is possible that in some analysis we would like to find how many times given word appears in which form, but in general many forms of one word also make analysis vague. There is also great function to deal with that - `lemmatize_words()` (from `textstem` package)
+
+It is essential to notice, `lemmatize_words()` is not the only one such function doing so. A different functions work in a different way and return different results. Classical explanation of that is a word “bear”. In one context it means huge animal living in forests, in other context it is a synonym of “to give birth”. Some algorithms try to distinguish words in situations like this, others don’t. We don’t focus on that, because this is a very advanced issue.
+
+Finally, we get preprocessed dataset by the following code:
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+library(textstem)
+text.data.set %>%
+  unnest_tokens(word, text, token = "ngrams", n = 1) %>%
+  anti_join(stop_words) %>%
+  mutate(word = lemmatize_words(word)) -> text.data.set
+```
+
+In case of legal acts it is worth to remove numbers. The manner of drafting legal acts provides many numbers which don’t have to affect meaning of the text.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+text.data.set$word <- ifelse(str_remove_all(text.data.set$word, "\\d") == "",
+                             NA,
+                             str_remove_all(text.data.set $word,"\\d"))
+
+text.data.set <- na.omit(text.data.set)
+```
+
+Now, it is possible to perform regular frequency analysis in R.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+text.data.set %>%
+  group_by(word) %>%
+  summarise(count = n()) %>%
+  arrange(desc(count)) %>%
+  slice(1:36) -> term.frequency
+```
+
+It is done, examination of frequency is finished.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+term.frequency
+```
+
+### <a id="Plotting_Wordcloud"></a>Plotting Wordcloud
+
+A data frame is not the best way to present data. To be honest, it is one of the worst, so it is good to think about visualization. There are plenty of options, but two of them are the most popular.
+
+The first is a wordcloud. This plot looks really cool and it is its only advantage. The second option is a barplot. Both are presented below.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+library(wordcloud2)
+wordcloud2(term.frequency)
+```
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+library(ggplot2)
+ggplot(data = term.frequency)+
+  geom_bar(aes(x = reorder(word, count), y = count), stat = "identity",  fill = "#93AA00")+
+  ylab("")+
+  xlab("")+
+  coord_flip()+
+  theme_bw()
+
+```
+
+***
+
+# <a id="Eurlex_package"></a>Eurlex package
+
+As you have seen, web-scrapping isn't the best way to obtain data. It is very inefficient, hard to use and you have to accept that some mistakes are almost inevitable. 
+
+There are a few alternatives and here we are going to introduce a method really useful for lawyers - the `eurlex` package. This package allows importing legal acts from [EUE-Lex](https://eur-lex.europa.eu/homepage.html) directly in R-console. The package provides seven functions, but here we go through the three main of them.
+
+The whole package bases on SPARQL queries, however, it is not important for user and we are going to skip technical details here.
+
+Getting legal acts using `eurlex` package requires three steps.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, include=FALSE}
+library(eurlex)
+```
+
+```{r, eval = FALSE, warning = FALSE, message = FALSE}
+library(eurlex)
+elx_make_query(resource_type = "any", directory = "09")
+```
+
+The first ine is making SPARQL query. The results of `elx_make_query()` are metadata, which are used by next function, however, here we have many options to 'personalize' our output. In above example we want any type of legal acts (directives, regulations, decisions, recommendations, caselaws, manuals, proposals and national implementations) which comes from directory "09" (taxation). The code of directory you can find on [Eurlex webpage](https://eur-lex.europa.eu/browse/directories/legislation.html). If you want more options, please run the following code in R-console and check help-documentation. You can include information like date of transposition or if given act is in force and so on.
+
+```{r, eval = FALSE, warning = FALSE, message = FALSE}
+?elx_make_query
+```
+
+The second step is obtaining a data frame with links to legal acts.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+elx_make_query(resource_type = "any", directory = "09") %>%
+  elx_run_query() -> links
+```
+
+We assign this data frame to variable `links`, because we want to download all legal acts from a data frame. It is necessary because the bulid-in function allows downloading just one in a single run.
+
+Before downloading we restrict above dataset. Currently `links` contains $3 764$ legal acts. For purpose of our boot camp it is enough to look at smaller example, so let's restrict to given eight legal acts (chosen arbitrarily).
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE, include = FALSE}
+CELEX_number <- c("32016H0136", "32012H0772", "32012H0771", "32011H0856", "31994H0390", "31994H0079", "31979H0570", "31976H0002")
+```
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+CELEX_number
+```
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+links <- links[match(CELEX_number, links$celex),]
+
+links
+```
+
+In the last step we need function `elx_fetch_data()`, but as I said, it can download just one legal act. To download all we use superposition with `lapply()` function.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+legal.acts <- data.frame(CELEX=links$celex,
+                   text=unlist(lapply(links$work,elx_fetch_data,
+                                     language_1 = "en",
+                                     type = "text")))
+```
+
+The result of `lapply()` is a list, so we use `unlist()` to put all results into one vector and make a nice data frame.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+legal.acts
+```
+
+That is all. One question left. Is it better than web-scrapping or not? The answer is not obvious. `eurlex` package looks better and simpler, but it is still quite new, so it is possible that there is a few errors in how it works. However, personally, I still encourage to use it.
+
+***
+
+# <a id="Inverse_term_frequency"></a>Inverse term frequency
+
+In the chapter "Wordcloud" we analyzed term frequency in the simplest way. We treated our whole dataset as one document, and we calculated frequencies. In general, we can do something more interesting. Information about how given word is unique in the set of documents could be much more valuable. There is a simple measure of how much information the given word provides. The value of
+$$idf(t,D)=ln\frac{N}{D(t)}$$
+is called the inverse term frequency. $N$ denotes total number of documents and $D(t)$ denotes number of documents where term $t$ appears.
+
+Multiplying $idf$ by term frequency:
+$$tf\left(t,d\right)=\frac{f_{t,d}}{\sum_{t' \in d}f_{t',d}}$$
+($f_{t,d}$ denotes number of occurrences of term $t$ in document $d$)
+provides very interesting measure which is called $tf$-$idf(t,d,D)$.
+
+The $tf$-$idf(t,d,D)$ could be used to analyze what given set of documents is about without reading it. Generally speaking, $tf$ provides information which words appear frequently in the set of documents, however in each text there are plenty of words without significant meaning (like stop words). Such words always have very small $idf$. On the other hand, frequency of some words could be relatively low, because they appear just in one, or two documents and we shouldn't forget about them, because they could provide interesting information about documents, which they are in. The $idf$ boosts value of $tf$-$idf(t,d,D)$ of words like them. In consequence we get a brief summary of a set of documents.
+
+Luckily, the user doesn't have to know above formulas, because they are implemented in R. Let's use text-data from previous chapter. We are going to examine what these documents are about.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+legal.acts$text <- str_remove_all(legal.acts$text,"\\d")
+```
+
+As always, we start from removing numbers.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+legal.acts %>%
+  unnest_tokens(word, text) %>%
+  anti_join(stop_words) %>%
+  mutate(word = lemmatize_words(word)) %>% 
+  group_by(CELEX, word)%>%
+  summarise(n = n())%>%
+  arrange(desc(n)) -> act.word
+```
+
+Now, we should prepossess our data. We transform them to one-grams just for training purposes. In real-life analysis one should consider more cases by analyzing bi-grams, three-grams and so on.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+act.word %>%
+  bind_tf_idf(word, CELEX, n) -> act.word.2
+```
+
+Run function `bind_tf_idf()` from `tidytext` package.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+act.word.2 %>% 
+  arrange(desc(tf_idf)) %>%
+  mutate(word = factor(word, levels = rev(unique(word)))) %>% 
+  group_by(CELEX) %>% 
+  slice(1:10) %>% 
+  ungroup() %>%
+  ggplot(aes(word, tf_idf, fill = CELEX)) +
+  geom_col(show.legend = FALSE) +
+  labs(x = NULL, y = "tf-idf") +
+  facet_wrap(~CELEX, ncol = 2, scales = "free") +
+  coord_flip()+
+  theme_bw()
+```
+
+The last step is to plot our results.
+
+Now it is clear that document $32011H0856$ is about inheritance taxes and $31979H0570$ is about postal services taxes. We can check titles of aforementioned documents on [this website](https://eur-lex.europa.eu/search.html?qid=1650147359321&name=browse-by%3Alegislation-in-force&CC_1_CODED=09&type=named&displayProfile=allRelAllConsDocProfile&FM_CODED=RECO) to realize that results of analysis are quite acceptable.
+
+***
+
+# <a id="Topic_Modeling"></a>Topic Modeling
+
+In this chapter we don't focus on learning. My purpose is rather to show something interesting. I would be happy if after this part you will be aware that something like topic modeling exists and what it is about. I don't expect that you will be able to conduct such analysis. Of course, again we skip technical details.
+
+Here, we are going to go through *Latent Dirichlet Allocation* (LDA). Please, don't relate it with classification method LDA (Linear Discriminant Analysis).
+
+To be honest, personally, I really don't like this algorithm, but it is a classic of NLP. That is why I have to mention it, though I really don't want to.
+
+Let's assume that we have a dataset of UE regulations from 2022 which are in force. What are these documents about? Or to be more precise, what the top topics are? It is a very hard question.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE,include=FALSE}
+library(eurlex)
+library(dplyr)
+library(tidytext)
+library(topicmodels)
+library(ggplot2)
+library(stringr)
+library(lubridate)
+library(tm)
+
+query <- elx_make_query(resource_type = "regulation",
+                        include_date = TRUE,
+                        include_force = TRUE)
+
+database <- elx_run_query(query)
+
+database <- subset(database,
+                   database$force=="true"&database$'callret-3'>=ymd(20220101))
+
+dataset <- data.frame(legal.act = unlist(lapply(database$work, elx_fetch_data,
+                                                type = "text",
+                                                language_1 = "en")),
+                      CELEX = database$celex)
+
+dataset$legal.act <- str_to_lower(dataset$legal.act)
+
+dataset$legal.act <- str_remove_all(dataset$legal.act, "\\d")
+dataset$legal.act <- str_remove_all(dataset$legal.act, "article")
+dataset$legal.act <- str_remove_all(dataset$legal.act, "regulation")
+dataset$legal.act <- str_remove_all(dataset$legal.act, "eu")
+dataset$legal.act <- str_remove_all(dataset$legal.act, "commission")
+dataset$legal.act <- str_remove_all(dataset$legal.act, "ec")
+dataset$legal.act <- str_remove_all(dataset$legal.act, "annex")
+dataset$legal.act <- str_remove_all(dataset$legal.act, "european")
+dataset$legal.act <- str_remove_all(dataset$legal.act, "implementing")
+dataset$legal.act <- str_remove_all(dataset$legal.act, "council")
+dataset$legal.act <- str_remove_all(dataset$legal.act, "union")
+dataset$legal.act <- str_remove_all(dataset$legal.act, "parliament")
+dataset$legal.act <- str_remove_all(dataset$legal.act, "union")
+dataset$legal.act <- str_remove_all(dataset$legal.act, "accordance")
+dataset$legal.act <- str_remove_all(dataset$legal.act, "authority")
+
+wanted <- c("32022R0065",
+            "32022R0205",
+            "32022R0440",
+            "32022R0491",
+            "32022R0587",
+            "32022R0097",
+            "32022R0136")
+
+dataset <- subset(dataset,!(dataset$CELEX %in% wanted))
+```
+
+Of course, you can read all of them (over 250), or try to check just titles. But I think, it is really time-consuming. LDA can help us. Firstly, we should prepossess text-data like usual.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+dataset %>% 
+  unnest_tokens(word, legal.act) %>%
+  anti_join(stop_words) %>%
+  mutate(word = lemmatize_words(word)) %>% 
+  count(CELEX,word,sort=TRUE) %>%
+  ungroup() -> dataset_prep
+```
+
+Next, we have to do some technical things like transforming dataset into an object called Document Term Matrix. Nevermind.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+dataset_prep %>%
+  cast_dtm(CELEX, word ,n) -> data_dtm
+```
+
+When we have data in this form, we can run the LDA algorithm, which is implemented in `topicmodels` package.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+library(topicmodels)
+
+data_lda <-  LDA(data_dtm, k = 6)
+```
+
+Now, we can see the most serious weakness of the LDA. There is an argument `k`, which means the number of topics which LDA should recognize. LDA examines similarity between documents and assign them to a few classes. But a user has to decide how many these classes are.
+
+Both, neither the user, neither the computer don't know what these classes/topics are about. This is just a guess, that for example six classes is a good choice.
+
+Next, we can use $tf$-$idf$ from the previous chapter to try to recognize these six topics.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+top_terms <- data_lda %>% 
+  tidy(matrix = "beta") %>%
+  group_by(topic) %>%
+  top_n(10, beta) %>%
+  ungroup() %>%
+  arrange(topic, -beta)
+```
+
+And plot the results.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+top_terms %>%
+  mutate(term = reorder_within(term, beta, topic)) %>%
+  ggplot()+
+  geom_col(aes(term, beta, fill=as.factor(topic)), show.legend = FALSE)+
+  labs(x = NULL, y = "tf-idf") +
+  facet_wrap(~topic, ncol = 2, scales = "free") +
+  coord_flip()+
+  scale_x_reordered() +
+  theme_classic()
+```
+
+Now, we can see that Ukraine and Russia are a very popular topic in this year. No one could expect that...
+
+If you want to check which document was assigned to which class, please run the following code.
+
+```{r, eval = TRUE, warning = FALSE, message = FALSE}
+(doc_topics <- tidy(data_lda, matrix = "gamma"))
+```
+
+In this data frame we have all documents assigned to all classes, but with different probabilities.
+
+***
+
+# <a id="Exercises"></a>Exercises
+
+1. Change `text_data_2` into a vector containing just word “article” and respective number in each element (using function `str_extract()`), then randomly change order of elements. Finally, order output vector using function `str_order()`. `text_data_2` is avaliable in csv file `exercise1`.
+
+2. Change `text_data_2` into a vector containing just word “article” and respective number in each element (using function `str_remove_all()`), then randomly change order of elements. Finally, order output vector using function `str_sort()`. `text_data_2` is avaliable in csv file `exercise1`.
+
+3. Download table of current members of the United Nations from [these website](https://en.wikipedia.org/wiki/Member_states_of_the_United_Nations) and remove last column. From the first column remove notes (i.e. strings "[note 1]", "[note 2]" and so on).
+
+4. Using `eurlex` package download document with CELEX number 32021R2282, examine term frequency and plot the results as wordcloud. Plot 72 the most frequent words.
+
+5. Using `eurlex` package download legal acts specified in csv file `exercise5`. Then examine what these documents are about and plot the results, but plot just six the most important words.
+Hint: directory is 1607.
+
+6. Group documents from csv file `exercise6`. There should be six groups: "Regulations", "Decisions", "Recommendations", "Opinions", "Resolutions", "Other documents". Create data frame where the first column is CELEX number and the second column is group name.
+
+***
+
+# <a id="References"></a>References
+
+1. Blei, David M., Andrew Y. Ng, and Michael I. Jordan. "Latent dirichlet allocation."       Journal of machine Learning research 3.Jan (2003): 993-1022.
+
+2. Bunting M., Baylor C., Kennedy C., Mahmood H., Natural Language Processing in R for       Beginners, Udemy course.
+
+3. Ingo Feinerer, Kurt Hornik, and David Meyer (2008). Text Mining
+  Infrastructure in R. Journal of Statistical Software 25(5): 1-54. URL:
+  https://www.jstatsoft.org/v25/i05/.
+
+4. Garrett Grolemund, Hadley Wickham (2011). Dates and Times Made Easy with
+  lubridate. Journal of Statistical Software, 40(3), 1-25. URL
+  https://www.jstatsoft.org/v40/i03/.
+  
+5. Grün B, Hornik K (2011). “topicmodels: An R Package for Fitting Topic
+  Models.” Journal of Statistical Software, *40*(13), 1-30. doi:
+  10.18637/jss.v040.i13 (URL: https://doi.org/10.18637/jss.v040.i13).
+  
+6. Dawei Lang and Guan-tin Chien (2018). wordcloud2: Create Word Cloud by
+  'htmlwidget'. R package version 0.2.1.
+  https://CRAN.R-project.org/package=wordcloud2
+  
+7. M. Ovadek. eurlex: Facilitating access to data on European Union laws. Political Research   Exchange, https://doi.org/10.1080/2474736X.2020.1870150
+
+8. Rinker, T. W. (2018). textstem: Tools for stemming and lemmatizing text
+  version 0.1.4. Buffalo, New York. http://github.com/trinker/textstem
+  
+9. Silge J, Robinson D (2016). “tidytext: Text Mining and Analysis Using Tidy
+  Data Principles in R.” _JOSS_, *1*(3). doi: 10.21105/joss.00037 (URL:
+  https://doi.org/10.21105/joss.00037), <URL:
+  http://dx.doi.org/10.21105/joss.00037>.
+  
+10. H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag
+  New York, 2016.
+
+11. Hadley Wickham (2021). rvest: Easily Harvest (Scrape) Web Pages. R package
+  version 1.0.2. https://CRAN.R-project.org/package=rvest
+  
+12. Hadley Wickham (2019). stringr: Simple, Consistent Wrappers for Common
+  String Operations. R package version 1.4.0.
+  https://CRAN.R-project.org/package=stringr
+  
+13. Hadley Wickham, Romain François, Lionel Henry and Kirill Müller (2022).
+  dplyr: A Grammar of Data Manipulation. R package version 1.0.8.
+  https://CRAN.R-project.org/package=dplyr
+  
+14. Hadley Wickham, Jim Hester and Jennifer Bryan (2022). readr: Read
+  Rectangular Text Data. R package version 2.1.2.
+  https://CRAN.R-project.org/package=readr
+  
+15. R Core Team (2022). R: A language and environment for statistical
+  computing. R Foundation for Statistical Computing, Vienna, Austria. URL
+  https://www.R-project.org/.
+  
+16. R version 4.1.3 (2022-03-10), platform: aarch64-apple-darwin20
+
+***

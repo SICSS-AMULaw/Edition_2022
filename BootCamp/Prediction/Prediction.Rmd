@@ -1,0 +1,351 @@
+---
+title: "Prediction"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+date: 14th June 2022
+author: Anna Hołdyńska
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+## Table of Contents
+
+1. [**Introduction**](#introduction)
+
+2. [**Linear Regression **](#linear_regression)
+
+3. [**Polynomial Regression **](#polynomial_regression)
+
+4. [**Multiple Regression **](#multiple_regression)
+
+5. [**Logistic Regression **](#logistic_regression)
+
+6. [**Exercises **](#exercises)
+
+7. [**References **](#references)
+
+
+## <a id="introduction"></a>Introduction
+
+Before we start to focus on prediction, we should take a closer look at the regression term. Regression is a method that allows us to study a relationship between the variables. We can use this knowledge to predict unknown values based on others' known. In practice, we look for a relation between the independent variable $X$ and the dependent variable $Y$. This relationship can be used to predict the value of $Y$ depending on $X$. For example, the price of a house depends on the number of rooms. In `R` we write it as `Price ~ Rooms`.
+
+![Regression](regresja.png) \
+
+We build a regression model that we will use later for prediction. From a mathematical point of view, we want to create a  regression function and try to fit it to our data. We are going to talk about different types of regression. For example, in linear regression our function will be a linear function and in polynomial regression, a polynomial.
+
+## <a id="linear_regression"></a>Linear Regression
+
+Information about linear regression can be found in the "Statistical tests" lecture. We will see the use of linear regression in practice. \
+
+### Example: Tuberculosis cases
+
+Example below illustrates number of tuberculosis cases in 1995-2002. Number of cases was reported per 100 000 people. We assume a linear relationship between the year and the cases. We will build a regression model and try to predict the number of cases in 2003. \
+\
+In the beginning, we create a data frame.
+```{r message = FALSE, error = FALSE, warning = FALSE}
+year <- 1995:2002
+cases <- c(39.7, 38.2, 34.7, 33.1, 30.1, 28.4, 26.3, 24.7)
+data.set <- data.frame(year, cases)
+```
+
+A good approach is to draw our data and see how it looks on the graph. This may help select a type of regression. \
+We can see in the plot below that data is arranged linearly.
+
+```{r message = FALSE, error = FALSE, warning = FALSE, out.width="55%"}
+plot(data.set, pch = 21, xlab = "Year", ylab = "Number of cases")
+```
+\
+We create a linear regression model.
+
+```{r message = FALSE, error = FALSE, warning = FALSE}
+model.lm <- lm(cases ~ year, data = data.set)
+```
+
+We add a regression line to our plot using the `abline()` function.
+
+```{r message = FALSE, error = FALSE, warning = FALSE, out.width="55%"}
+plot(data.set, pch = 21, xlab = "Year", ylab = "Number of cases")
+abline(model.lm, col = 'darkred', lwd = 2)
+```
+\
+The `Summary()` function displays the statistics of our created model. \
+We can see the values of quartiles (`1Q` and `3Q`), minimum (`Min`), maximum (`Max`), and median (`Median`) for the residuals. \
+The directional factor (`Estimate: -2.21905`) shows that year over year, the number of cases decreased by 2.22. \
+The standard error (`Std. Error`), the value of t statistic (`t value`), and p-value (`Pr(>|t|)`) are given for each of the estimators. With p-value, we can tell if the `year` parameter is statistically significant. The number `1.65e-07` is less than 0.05, which means we reject the null hypothesis. Time significantly affects the number of cases. \
+We are also interested in the coefficient of determination $R^2$ (`Multiple R-squared`) and the adjusted coefficient of determination $R^2$ (`Adjusted R-squared`). When we have more than one independent variables in our model, like in multiple regression, we pay more attention to `Adjusted R-squared`, but in linear regression we look at `Multiple R-squared`. It is assumed that a good fit of the model to the data is when the coefficient is greater than 60%. We have to remember that measuring the quality of a model using the coefficient of determination makes no sense when we remove `Intercept` parameter from the model. Removing `Intercept` parameter depends on researcher and the problem. In our examples, we will not remove this parameter. However, if we ever wanted to remove it, we should measure the quality of the model using other measures, for example MAE, MAPE or RMSE. Each of these measures is described by a mathematical formula that we use in the `R` code. The smaller MAE/MAPE/RMSE value, the better the model. 0 means the model is perfect.
+
+```{r message = FALSE, error = FALSE, warning = FALSE}
+MAE = mean(abs(resid(model.lm)))
+MAPE = mean(abs(resid(model.lm)) / abs(data.set$cases))
+RMSE = sqrt(mean(resid(model.lm)^2))
+```
+
+If we want to remove `Intercept` parameter, in `lm()` function, we have to type `cases ~ year - 1` instead of `cases ~ year`.
+
+```{r message = FALSE, error = FALSE, warning = FALSE}
+summary(model.lm)
+```
+
+Finally, we will try to predict the number of cases in 2003. A good choice to do this will be the `predict()` function.
+
+```{r message = FALSE, error = FALSE, warning = FALSE}
+predict(model.lm, list(year = 2003))
+```
+
+## <a id="polynomial_regression"></a>Polynomial Regression
+
+If we notice that our data is not arranged in a linear way, but it is similar, for example to a quadratic function, we can use polynomial regression. \
+In the previous example, the independent variable was `year` and the dependent variable was `cases`. The table below shows what changes need to be made to the linear model (`lm()` function) to get quadratic or cubic polynomial regression. The `I()` function is used to inhibit the interpretation of operators such as "+", "-", "*" and "^" as formula operators, so they are used as arithmetical operators.
+
+| Linear Regression | Quadratic Regression | Cubic Regression |
+| :-----------: | :-----------: | :-----------: |
+| `cases ~ year` | `cases ~ year + I(year^2)` | `cases ~ year + I(year^2) + I(year^3)` |
+
+### Example: Pressure
+
+Now, we have data on the relation between temperature in degrees Celsius and vapor pressure of mercury in millimeters (of mercury). More information about dataset `pressure` we find by typing:
+
+```{r eval = FALSE, message = FALSE, error = FALSE, warning = FALSE}
+?pressure
+```
+
+Let's draw it on plot. We can observe that the relation is not linear but curvilinear i.e. linear with a curve.
+
+```{r message = FALSE, error = FALSE, warning = FALSE, out.width="55%"}
+plot(pressure, pch = 21)
+```
+
+Polynomial regression could fit the data better than simple linear regression. If we draw a linear regression model on our dataset, just like before, it won't be a good fit.
+
+```{r message = FALSE, error = FALSE, warning = FALSE, out.width="55%"}
+model_lm <- lm(pressure ~ temperature, data = pressure)
+plot(pressure, pch = 21)
+abline(model_lm, col = 'darkred', lwd = 2)
+```
+
+We need to look at the table at the beginning of the chapter and try to create a polynomial regression model that fits our data. At first, we start with a quadratic regression. We draw it to see, how the fit of this model looks.
+
+```{r message = FALSE, error = FALSE, warning = FALSE, out.width="55%"}
+model1 <- lm(pressure ~ temperature + 
+               I(temperature^2), data = pressure)
+plot(pressure, pch = 21)
+coefs <- coef(model1)
+curve(coefs[1] + coefs[2] * x + coefs[3] * x^2,
+      add = TRUE,
+      col = "darkred",
+      lwd = 2)
+```
+
+It doesn't look good, so we try with a 3th and 4th level of a polynomial regression to see which level will be the best for us.
+
+```{r message = FALSE, error = FALSE, warning = FALSE, out.width="55%"}
+model2 <- lm(pressure ~ temperature + 
+               I(temperature^2) + 
+               I(temperature^3), data = pressure)
+plot(pressure, pch = 21)
+coefs <- coef(model2)
+curve(coefs[1] + coefs[2] * x + coefs[3] * x^2 + coefs[4] * x^3,
+      add = TRUE,
+      col = "darkred",
+      lwd = 2)
+```
+
+```{r message = FALSE, error = FALSE, warning = FALSE, out.width="55%"}
+model3 <- lm(pressure ~ temperature + 
+               I(temperature^2) + 
+               I(temperature^3) + 
+               I(temperature^4), data = pressure)
+plot(pressure, pch = 21)
+coefs <- coef(model3)
+curve(coefs[1] + coefs[2] * x + coefs[3] * x^2 + coefs[4] * x^3 + coefs[5] * x^4,
+      add = TRUE,
+      col = "darkred",
+      lwd = 2)
+```
+
+In my opinion, 4th level is sufficient, because more steps would not change the fit of the model to the data. We created a good fit. \
+\
+Let's call the `summary()` function on these 3 models to see how coefficient of determination $R^2$ looks.
+
+```{r message = FALSE, error = FALSE, warning = FALSE, out.width="55%"}
+summary(model1)
+summary(model2)
+summary(model3)
+```
+
+We see that in `model3` coefficient of determination $R^2$ is the highest. \
+We created a good model with a good fit to the data. \
+\
+Now, we predict the pressure value for a temperature equal to 400.
+
+```{r message = FALSE, error = FALSE, warning = FALSE, out.width="55%"}
+predict(model3, list(temperature = 400))
+```
+
+## <a id="multiple_regression"></a>Multiple Regression
+
+Previously, we assumed that the dependent variable depends on only one variable. Sometimes phenomenon under study depends not only on one factor, but on many. This situation happens in multiple regression. A good method for building a multiple regression model is stepwise regression. Suppose we create a model containing all the variables. Using stepwise regression, we can remove a variable at each step to get the best model. The quality of the model is measured by Akaike's Information Criterion (AIC) or Bayesian Information Criterion (BIC). We care about prediction quality, so we should use the AIC criterion. The smaller AIC value, the better the model. Let's see a multiple regression with an example.
+
+### Example: Longley's Economic Regression Data
+
+Dataset `longley` contains 7 economical variables, observed yearly from 1947 to 1962. If we want to learn more about this dataset, just use the command:
+
+```{r eval = FALSE, message = FALSE, error = FALSE, warning = FALSE}
+?longley
+```
+
+We decide to model the `Employed` variable. The notation `Employed ~ .` means that the independent variables are the other variables in the dataset.
+
+```{r message = FALSE, error = FALSE, warning = FALSE}
+model1 <- lm(Employed ~ ., data = longley)
+```
+
+We will try to create the best model using two methods. Without and with stepwise regression.
+
+#### Method 1 - without stepwise regression
+
+We use `summary()` function on `model1`. We see the coefficients for each independent variable of the model. 
+
+```{r message = FALSE, error = FALSE, warning = FALSE}
+summary(model1)
+```
+
+`Summary()` function showed us which variables are significant and which are not. We remove variables that are not significant (`GNP.deflator`, `GNP` and `Population`) from the model.
+
+```{r message = FALSE, error = FALSE, warning = FALSE}
+model2 <- update(model1, . ~ . -GNP.deflator -GNP -Population)
+summary(model2)
+```
+
+Comparing the `Adjusted R-squared` coefficients of both model, we notice that `model1` is better than `model2`, but it does not mean that we have chosen the best model because we did the variable removal manually. Now, let's try stepwise regression.
+
+#### Method 2 - with stepwise regression
+
+`Model1` looks the same as before. `Step()` function shows us at each step which variables it removes from the model and finally displays the best model selected using AIC criterion. 
+
+```{r message = FALSE, error = FALSE, warning = FALSE}
+print(model3 <- step(model1))
+```
+
+We have selected the best multiple regression model (`model3`). We will now create a prediction for the number of people employed (`Employed`) using `predict()` function.
+
+```{r message = FALSE, error = FALSE, warning = FALSE}
+newdata = data.frame(Year = 1970, 
+                     GNP = 600, 
+                     Unemployed = 500, 
+                     Armed.Forces = 300)
+predict(model3, newdata)
+```
+
+## <a id="logistic_regression"></a>Logistic Regression
+
+Logistic regression is a special and important example of a generalized linear model. We assume that the dependent variable $Y$ takes only two values (most often $Y$ is a binary variable). For example, the values of the $Y$ variable will be: good or bad, 1 or 0, healthy or sick.
+
+<img src="logistyczna.png" alt="drawing" width="600"/> \
+
+### Example: Fair's Extramarital Affairs Data
+
+Dataset is infidelity data, known as Fair's Affairs. This data contains 9 variables which hold information such as how often respondents have affairs during the past years, as well as their age, gender, education, years, married etc.
+
+![Regression](affairs.png) \
+
+Applying logistic regression, we can find which factors contributed the most to infidelity. \
+We upload our data. Dataset `Affairs` comes from `AER` package.
+
+```{r message = FALSE, error = FALSE, warning = FALSE}
+# if library() function doesn't work type install.packages("AER")
+library(AER)
+data(Affairs)
+```
+
+We are interested in the binary outcome for our response variable (had an affair/did not have an affair). We create a new binary column (`ynaffairs`) which will be our dependent variable (1 means "Yes, had an affair", 0 means "No, did not have an affair").
+
+```{r message = FALSE, error = FALSE, warning = FALSE}
+library(dplyr)
+Affairs <- Affairs %>% 
+  mutate(ynaffairs = ifelse(affairs > 0, 1, 0))
+```
+
+In the next step, we create a logistic model and see the statistics of model using the `summary()` function.
+
+```{r message = FALSE, error = FALSE, warning = FALSE}
+model_glm <- glm(ynaffairs ~ gender + age +
+                   yearsmarried + children + 
+                   religiousness + education + 
+                   occupation + rating,
+                 data = Affairs, 
+                 family = 'binomial')
+summary(model_glm)
+```
+
+We choose the best model using `step()` function.
+
+```{r message = FALSE, error = FALSE, warning = FALSE}
+model_glm2 <- step(model_glm)
+summary(model_glm2)
+```
+
+Let's try to make a prediction. As before, we create new data containing the values of predictor variables we're interested in. We apply the prediction function to get the probabilities of having affair for these new respondents. \
+We notice that change of having affair declining from 0.68 the marriage is rated 1 = "very unhappy" to 0.25 when the marriage is rated 5 = "very happy". It indicates the unhappy couple are three times more likely to have an affair compared to the happy one. \
+We include the argument `type = "response"` (in `predict()` function) in order to get predicted probability that y = 1.
+
+```{r message = FALSE, error = FALSE, warning = FALSE}
+newdata <- data.frame(rating = c(1, 2, 3, 4, 5),
+                      age = 25,
+                      yearsmarried = 3,
+                      religiousness = 1,
+                      gender = "male")
+predict(model_glm2, 
+        newdata = newdata, 
+        type = "response")
+```
+
+We could change the new data a bit and see how the probability of having affair changes with age. Let's create a new data. \
+We notice that the older a person gets, the probability of having affair decreases.
+
+```{r message = FALSE, error = FALSE, warning = FALSE}
+newdata <- data.frame(rating = 5,
+                      age = c(25, 35, 45, 55, 65),
+                      yearsmarried = 3,
+                      religiousness = 1,
+                      gender = "female")
+predict(model_glm2, 
+        newdata = newdata, 
+        type = "response")
+```
+
+## <a id="exercises"></a>Exercises
+
+1. Dataset `cars` contains two columns: speed (`speed`) and stopping distance (`dist`).
+- draw a plot to see how the data looks
+- create a linear regression model and add regression line to plot
+- create a quadratic regression model and add regression line to plot
+- consider which model is better and predict `dist` value, when `speed` is 40.
+
+2. Using dataset `Boston` from `MASS` package, fit a polynomial regression model. 
+- draw a plot to see how the data looks (choose x value as `medv` and y as `lstat`)
+- create a polynomial regression models (`lstat` is dependent variable and `medv` is independent variable) with different levels of the polynomial. In your opinion, which is the best? (use measures from lecture)
+- using the best polynomial regression model, predict `lstat` value where `medv` = 50.04
+
+3. Use dataset `marketing` from `datarium` package. Read more information about this dataset (`?marketing`). Create multiple regression model using method 1 or method 2 from the lecture. Predict `sales` value for your selected variable values.
+
+4. Let's more predict. In chapter Logistic Regression is example: Fair's Extramarital Affairs Data. Take the best chosen model and predict the probabilities of having affair for these new data:
+- `rating` is 3, `age` is 20, `yearsmarried` is 2, `gender` is male and `religiousness` is 1
+- `rating` is 5, `age` is 80, `yearsmarried` is 10 or 20, `gender` is female, religiousness` is 3
+
+## <a id="references"></a>References \
+
+1 T. Górecki, "Data analysis" - lectures, Adam Mickiewicz University in Poznań, Poznań 2021. \
+2. Simon Jackman (2020). pscl: Classes and Methods for R Developed in the Political Science Computational Laboratory. United States Studies Centre, University of Sydney. Sydney, New South Wales, Australia. R package version 1.5.5. URL https://github.com/atahk/pscl/. \
+3. Gareth James, Daniela Witten, Trevor Hastie, Robert Tibshirani, "An Introduction to Statistical Learning with Applications in R", Springer Science+Business Media, New York 2013. \
+4. Christian Kleiber and Achim Zeileis (2008). Applied Econometrics with R. New York: Springer-Verlag. ISBN 978-0-387-77316-2. URL https://CRAN.R-project.org/package=AER. \
+5. Norman Matloff, "Statistical Regression and Classification From Linear Models to Machine Learning", CRC Press, 2017 by Taylor & Francis Group. \
+6. Michaelino Mervisiano's article, https://towardsdatascience.com/how-to-do-logistic-regression-in-r-456e9cfec7cd. \
+7. P. Piasecki, "Data analysis" - classes, Adam Mickiewicz University in Poznań, Poznań 2021. \
+8. Hadley Wickham, Romain François, Lionel Henry and Kirill Müller (2021). dplyr: A Grammar of Data Manipulation. R package version 1.0.7. https://CRAN.R-project.org/package=dplyr.
+

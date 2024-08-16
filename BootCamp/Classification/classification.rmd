@@ -1,0 +1,271 @@
+---
+title: "Classification"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+date: 14th June 2022
+author: Mateusz Gruszczyński
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+```{r, include = FALSE, results = FALSE, warning = FALSE, message = FALSE}
+install.packages("mlbench")
+install.packages("rattle")
+install.packages("caret")
+install.packages("dplyr")
+```
+
+```{r, include = FALSE, results = FALSE, warning = FALSE, message = FALSE}
+library(mlbench)
+library(rattle)
+data("PimaIndiansDiabetes")
+```
+
+### Table of Contents
+
+***
+
+1. [**Introduction**](#Introduction)
+
+2. [**Model Assessment**](#Model_Assessment)
+  + [Resubstitution Error Rate](#Resubstitution_Error_Rate)
+  + [Leave-One-Out Cross-Validation (LOOCV)](#LOOCV)
+  + [k-Fold Cross-Validation (kCV)](#kcv)
+  + [Confusion Matrix](#Confusion_Matrix)
+
+3. [**Classification Models**](#Classification_Models)
+  + [k-Nearest Neighbor (KNN)](#knn)
+  + [Linear Discriminant Analysis (LDA)](#lda)
+  + [Naive Bayes Classifier](#nb)
+  + [Classification Trees](#ctree)
+
+4. [**Exercises**](#Exercises)
+
+5. [**References**](#References)
+
+# <a id="Introduction"></a>Introduction
+The classification problem boils down to assigning objects described by the values of multiple features to some class. These classes are assigned by codes which are called labels. For example, based on features like: temperature, pressure, symptoms. We can determine if a person is sick. The first element of classification is a **learning sample** which consist of independent variables that contain features observed on an object from a class with some label. The second element is a function that predicts the label for some new features. We call this function a **classifier**. The third element is the **classification error assessment**. The most common solution is to divide the set of given features into two independent subsets, so called learning and testing. Such division is usually realized in the ratio 70% of cases is the learning part of the set, and 30% is the test part (**test sample**). The test examples are classified using the classifier constructed on the learning set. Then, the decision proposed by the classifier is compared with actual decision in order to determine in classifier's decision was correct. In situations where you do not have an independent test sample and the size of the learning sample does not allow you to divide it into learning and test parts, you can use the classification error assessment from the learning sample.
+
+Dataset example:
+
+```{r echo=FALSE}
+head(PimaIndiansDiabetes)
+```
+The dataset is about diabetes. The features are pregnat, glucose, pressure, triceps, insulin, mass, pedigree, age and the label is diabetes.
+
+# <a id="Model_Assessment"></a>Model Assessment
+### <a id="Resubstitution_Error_Rate"></a>Resubstitution Error Rate
+
+The best situation is when we have an independent test sample. Then, we take the percentage of observations from the test sample misclassified by the classifier as the classification error. However, if we do not have an independent test sample, we use a learning sample for estimation. In this case, the assessment of the current error rate is the value of the **resubstitution estimator** (resubstitution error rate). That is, the learning sample is also a test sample. This method is not a good idea for quality assessment because the learning sample is also a test sample this estimator is loaded and underestimates the actual error value.
+
+```{r echo=FALSE}
+data.frame(classifier = c('A','A','B','A','C'),
+           test_sample = c('A','B','B','A','C'))
+```
+
+As we can see in the second line, the classifier misassigned the label to the observation. For the other observations, it did it right. We get the error rating:
+
+Resubstitution error rate = **0.2**
+
+Accuracy = **0.8**
+
+How do we do this in R? We use the mean() and predict() functions to do this. In the following way:
+
+```{r,eval = FALSE, warning = FALSE, message = FALSE}
+predicted_labels = predict(model)
+mean(predicted_labels != true_labels)
+```
+
+### <a id="LOOCV"></a>Leave-One-Out Cross-Validation (LOOCV)
+When the learning sample is the test sample also,it is possible to reduce the bias of resubstitution estimator by dividing the sample into two subsets: the learning sample and the test sample. Then we use the first subset to construct a classifier based on the first, and the second to construct the estimator. However, using only part of the information to obtain a classification rule often leads to overfitting of the error estimator. The solution to this problem is the **Leave-One-Out Cross-Validation (LOOCV)** method. In this situation, we remove one observation from the learning sample, and construct a classifier on this learning sample. Then, we classify the removed item using this method.
+
+### <a id="kcv"></a>k-Fold Cross-Validation (kCV)
+
+In the LOOCV method, in each of the $n$ stages, we are actually selecting a one-element test set. Each sample observation is used to construct a classifier. Each observation is also a test object. This method requires $n$ classifiers to be constructed. In such situation for the large $n$, computational complexity significantly increases. An intermediate solution is **k-Fold Cross-Validation (kCV)**. It involves randomly dividing the sample into $k$ subsets, with $k - 1$ being the learning sample and the rest is the test sample. This procedure is repeated $k$ times, for each subset considered in turn as a test set.
+
+![](j:/Desktop/Kcv.png)
+
+### <a id="Confusion_Matrix"></a>Confusion Matrix
+
+Classification error alone is not enough to determine if the classifier works well. After completing the procedure of evaluating the classification error of our model, we are left with a list of test observations, where for each of them we know the observed class and the class predicted by our model. By counting the number of cases for each combination of these two classes (observed and predicted), we can create a so-called **confusion matrix**. We can assess the error of the model based on it: we need to sum up the values on the main diagonal (observations correctly identified) and divide them by the number of all test observations.
+
+![](j:/Desktop/matrix.png)
+
+$Accuracy = (TP + TN)/(TP + TN + FP + FN)$
+
+Precision the probability of receiving of a correct positive classification, provided that a positive case is obtained.
+
+$Precision = TP/(TP + FP)$
+
+Sensivity the probability that the classification will be correct if the case is positive.
+
+$Sensivity = TP/(TP + FN)$
+
+Specificity the probability that the classification will be correct, provided that the case is negative
+
+
+$Specificity = TN/(TN + FP)$
+
+
+# <a id="Classification_Models"></a>Classification Models
+
+In all examples we are going to use the dataset `iris`. The variables are measurements (in centimeters): sepal length and width and petal length and width, respectively, for 50 flowers from each of 3 iris species (setosa, versicolor, and virginica). In addition, the package must be loaded: `caret`, `dplyr`. 
+
+```{r, warning = FALSE, message = FALSE}
+library(caret)
+library(dplyr)
+```
+
+
+### <a id="knn"></a>k-Nearest Neighbour (KNN)
+
+It is one of the most popular methods of classification. It is a simple and intuitive way. In this method, we classify an object into that class to which most of its k nearest neighbors belong. We can use different metrics to evaluate the distance. This method has very high efficiency when the number of observations is infinitely large. In practice, we choose $k$ experimentally using a cross-validation method or test sample. 
+
+![](j:/Desktop/knn.png)
+
+We want to classify the red dot. Assuming k = 3 in the nearest neighbour, we will get 2 orange squares and 1 blue dot, this means that it has been classified as an orange square. If k = 5, we get 2 orange squares and 3 blue dots, which means that the red dot has been classified as a blue dot.
+
+##### Example in R
+
+```{r, warning = FALSE, message = FALSE}
+ctrl.loo <- trainControl(method = 'LOOCV',
+                         search = 'grid') # Method of error rate estimation
+
+(model.knn <- train(Species ~ ., 
+                    data = iris, 
+                    method = 'knn', 
+                    tuneGrid = data.frame(k = 1:5),# Parametr k
+                    trControl = ctrl.loo))# LOOCV
+```
+We chose k from 1 to 5. We could also have used k = 1 and so on.   We got the results for each k and the answer for which value of k would get the best result.
+
+```{r, warning = FALSE, message = FALSE}
+plot(model.knn, pch = 20)
+confusionMatrix(predict(model.knn), iris$Species)# Confusion Matrix
+```
+
+We compare the predictions with the actual labels. All observations that are outside the diagonal of the matrix are incorrectly classified. If Prediction: Virginica and Reference Versicolor equals 3 then we have misclassified Versicolor 3 times as Virginica.
+
+```{r, warning = FALSE, message = FALSE}
+#mean(predicted_labels != true_labels)
+mean(predict(model.knn) != iris$Species)# Resubtitution Error
+```
+
+### <a id="lda"></a>Linear Discriminant Analysis (LDA)
+
+Linear discriminant analysis is a Bayesian method (uses Bayes' theorem). We assume that each class is normally distributed. We will need to know as many distributions as there are classes. In this method, we assume that these classes on the plane differ only in position, and the shape remains the same (covariance matrices are the same). 
+
+##### Bayes' theorem
+
+Bayes' theorem is stated mathematically as the following equation:
+
+$P(A | B) = \frac{P(B | A)P(A)}{P(B)}$
+
+where $A$ and $B$ are events and $P(B) > 0$. $P(A | B)$ and $P(B | A)$ are conditional probabilities. 
+
+##### Example in R
+
+```{r, warning = FALSE, message = FALSE}
+ctrl.loo <- trainControl(method = 'LOOCV',
+                         search = 'grid')# Method of error rate estimation
+
+(model.lda <- train(Species ~ ., 
+                    data = iris, 
+                    method = 'lda',
+                    trControl = ctrl.loo))# LOOCV
+
+confusionMatrix(predict(model.lda), iris$Species)# Confusion Matrix
+mean(predict(model.lda) != iris$Species)# Resubtitution Error
+```
+
+### <a id="nb"></a>Naive Bayes Classifier
+
+This method is also based on Bayes' theorem. We assume that the features are independent, that is why we call it naive. In reality the features are rather dependent. Additionally, we need to assume some sort of distribution for our features. So we do not need to estimate multi-dimensional distributions, only one-dimensional distributions. Despite its naive design and very simplistic assumptions, this classifier often performs better than expected. The observation is classified into the class for which the following product is the largest.  
+
+$\forall_{k=1,\ldots,K}P(G_k|\textbf{x}) = \frac{P(G_k)P(\textbf{x}|G_k)}{P(\textbf{x})} = \frac{P(G_k,\textbf{x})}{P(\textbf{x})} \propto P(x_1 | x_2,\ldots,x_n,G_k) \cdot P(x_2 | x_3, \ldots, x_n,G_k)\cdots P(x_n|G_k) \cdot P(G_k) = P(G_k) \Pi_{i=1}^n P(x_i|G_k)$.
+
+##### Example in R
+
+```{r, warning = FALSE, message = FALSE}
+ctrl.loo <- trainControl(method = 'LOOCV',
+                         search = 'grid')# Method of error rate estimation
+
+(model.nb <- train(Species ~ ., 
+                    data = iris, 
+                    method = 'nb',
+                    trControl = ctrl.loo))# LOOCV
+
+confusionMatrix(predict(model.nb), iris$Species)# Confusion Matrix
+mean(predict(model.nb) != iris$Species)# Resubtitution Error
+```
+
+### <a id="ctree"></a>Classification Trees
+
+The result of this method is a binary tree.  This tree consists of a root and branches leading from the root to subsequent nodes. At each node, some condition on the observation is checked and based on that condition, one of the branches leading to the next node down is selected. At the bottom are the leaves of the tree, from which we read to which class the observation should be assigned. We want each question to divide our observations as homogeneously as possible.  Thus, if a node contained observations from only two classes, the ideal split would be one that assigned learning observations from one class to the left node and from the other class to the right node.
+
+##### Example in R
+
+```{r,warning = FALSE, message = FALSE}
+ctrl.loo <- trainControl(method = 'LOOCV',
+                         search = 'grid')# Method of error rate estimation
+
+(model.tree <- train(Species ~ ., 
+                    data = iris, 
+                    method = 'rpart',
+                    trControl = ctrl.loo,# LOOCV
+                    tuneLength = 5))# Number of values (cp)
+
+confusionMatrix(predict(model.tree), iris$Species)# Confusion Matrix
+mean(predict(model.tree) != iris$Species)# Resubtitution Error
+```
+```{r, eval = FALSE}
+library(rattle)
+fancyRpartPlot(model.tree$finalModel)
+```
+
+![](j:/Desktop/tree.png)
+
+How to read it?
+
+If Petal.Length < 2.5 = **Yes**, Setosa, there is a 100% of the first class observations, 33% of all observations.
+
+If Petal.Length < 2.5 = **No**, Versicolor (when the counts are the same, we select alphabetically), there are 50% of the second class observations and 50% of the third class observations, 67% of all observations.
+
+If Petal.Length < 2.5 = **No** and Petal.Width < 1.8 = **Yes**, Versicolor, there are 91% of the second class observations and 9% of the third class observations, 36% of all observations.
+
+If Petal.Length < 2.5 = **No** and Petal.Width < 1.8 = **No**, Versicolor, there are 2% of the second class observations and 98% of the third class observations, 31% of all observations.
+
+# <a id="Exercises"></a>Exercises
+
+1. Using the `Vehicle` set from the `mlbench` package. Construct a KNN model for parameters k from 1 to 5. Which one gives the best results? What is the re-substitution error and LOO CV error. Make a confusion matrix. After loading the package, load the Vehicle dataset as follow
+
+```{r, warning = FALSE, message = FALSE}
+data(Vehicle)
+```
+
+2. Using the `leafshape` set from the `DAAG` package. Construct a naive Bayesian model and see how much CV LOO and re-substitution error. What the accuracy is?.
+
+
+3. Using the `painters` set from the `MASS` package. Construct a LDA model. What is the re-substitution error and LOO CV error. Make a confusion matrix.
+
+4. Using the `Cars93` set from the `MASS` package. Construct a classification tree where the variable Type depends on the variables Length, Weight, Engine, Size, Horsepower, RPM and tuneLength = 5. What is the re-substitution error and LOO CV error. Make a confusion matrix and plot.
+
+# <a id="References"></a>References
+
+1. Hastie T., Tibshirani R., Friedman J. (2009). *The Elements if Statistical Learning, Springer.*
+2. Krzyśko M., Wołyński W., Górecki T., Skorzybut M. (2008). *Systemy uczące się - rozpoznawanie wzorców, analiza skupień i redukcja wymiarowości,* WNT, Warszawa.
+3. Kuhn M. (2022). caret: Classification and Regression Training. R package version 6.0-92. https://CRAN.R-project.org/package=caret
+4. Leisch F., Dimitriadou E. (2021). mlbench: Machine Learning Benchmark Problems. R package version 2.1-3.
+5. Maindonald J.H., Braun W.J. (2020). DAAG: Data Analysis and Graphics Data and Functions. R package version 1.24. https://CRAN.R-project.org/package=DAAG
+6. Matloff M., (2017). *Statistical Regression and Clasiffication: From Linear Models to Machine Learning,* Taylor & Francis Ltd.
+7. Piasecki P., “Data analysis” - classes, Adam Mickiewicz University in Poznań, Poznań 2021.
+8. Venables W. N., Ripley B. D., (2002). Modern Applied Statistics with S. Fourth Edition. Springer, New York. ISBN 0-387-95457-0
+9. Wickham H., François R., Henry L., Müller K. (2022). dplyr: A Grammar of Data Manipulation. R package version 1.0.8. https://CRAN.R-project.org/package=dplyr
+10. Williams G. J. (2011). Data Mining with Rattle and R: The Art of Excavating Data for Knowledge Discovery, Use R!, Springer.
+
+

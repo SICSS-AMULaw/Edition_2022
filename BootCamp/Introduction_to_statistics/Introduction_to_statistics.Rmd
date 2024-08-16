@@ -1,0 +1,632 @@
+---
+title: "Introduction to statistics"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+date: 13th June 2022
+author: Małgorzata Jurczak
+---
+
+
+<style>
+body {
+text-align: justify}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width = 9, fig.height = 6, fig.align = "center")
+library(knitr)
+```
+
+### Table of Contents
+
+------------------------------------------------------------------------
+
+1.  [**Descriptive statistics**](#Descriptive%20statistics)
+
+2.  [**Hypothesis testing**](#Hypothesis%20testing)
+
+3.  [**Statistical tests for categorical variables**](#Statistical%20tests%20for%20categorical%20variables)
+
+-   [The $\chi^2$ test of independence](#The%20$\chi%5E2$%20test%20of%20independence)
+
+-   [The $\chi^2$ test of goodness](#The%20$\chi%5E2$%20test%20of%20goodness)
+
+-   [The McNemar test](#The%20McNemar%20test)
+
+4.  [**Statistical tests for numerical variables**](#Statistical%20tests%20for%20numerical%20variables)
+
+-   [One-sample t Test](#One-sample%20t%20Test)
+
+-   [The independent samples t test](#The%20independent%20samples%20t%20test)
+
+-   [The paired samples t test](#The%20paired%20samples%20t%20test)
+
+5.  [**One-way ANOVA**](#One-way%20ANOVA)
+
+6.  [**Outliers**](#Outliers)
+
+7.  [**Statistical modeling**](#Statistical%20modeling)
+
+8.  [**Simple linear regression**](#Simple%20linear%20regression)
+
+9.  [**Exercises**](#Exercises)
+
+10. [**References**](#References)
+
+## <a id="Descriptive statistics"></a>Descriptive statistics
+
+Today we will start our workshop with a reminder of what descriptive statistics are. We will focus on the mean, variance, standard deviation and quantiles. We will also show how we can calculate these statistics using the R language. We will use the `FamilyIQ` dataset for this purpose. This is the dataset from Hox (2010) containing six intelligence measures where children are nested within families.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+library(MPsychoR)
+data("FamilyIQ")
+head(FamilyIQ)
+```
+
+As we see in this dataset, we have 6 different intelligence measures. We will focus only on the word list intelligence measure.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+#Create new dataset
+word_list<-data.frame(child=FamilyIQ$child, wordlist=FamilyIQ$wordlist)
+```
+
+1.  Mean
+
+For sure everyone remembers from the school what the arithmetic mean is. This is the sum of a collection of numbers divided by the count of numbers in the collection. We must remember that the arithmetic mean has three major disadvantages [[7]](#[7]):
+
+* First and foremost, it is heavily influenced by the extremes; 
+* The mean takes fraction values readily, even in situations where the fractional value never actually exists; 
+* All values are equally important and have the same effect on a result.
+
+We calculate the mean in R using the `mean()` function.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+mean(word_list$wordlist)
+```
+
+We know now that average value of the word list intelligence index is 29.94737. Let's take a look at how our data is arranged.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+# Create a table
+table(word_list$wordlist)
+# Create a plot
+library(ggplot2)
+ggplot(word_list, aes(wordlist)) +
+geom_histogram(color = 'white')
+```
+
+We can see that our data is close together and we have no values that are very different from the rest. Let us change our set a bit - let's only take the best results (those over 40) and then let's check the mean in that dataset.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+# Create new dataset
+word_list_new<- subset(word_list, word_list$wordlist>40) 
+# Calculate the mean 
+mean(word_list_new$wordlist)
+```
+
+Let's check what the mean would look like if we had made the extreme observation with the value 5.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+# Create new observation
+new<-c(13,5)
+# Add new observation
+word_list_new_v2<- rbind(word_list_new, new) 
+# Calculate the mean
+mean(word_list_new_v2$wordlist)
+```
+
+We can see that we now have significant differences in the results. This is why the mean can be misleading at times.
+
+2.  Variance and standard deviation
+
+The variance is the arithmetic mean of the squares of deviations of individual values of a feature from the arithmetic mean for the sample. We can say that variance measures the diversity of a community. The greater its value, the more diverse the community is. Standard deviation is the root of the variance.
+
+Standard deviation describes how close our data is to the mean. We must remember that, unlike variance, the standard deviation is expressed in the measurement units of the variable we measure. In R to calculate this statistics we can use `var()` and `sd()`.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+var(word_list$wordlist)
+sd(word_list$wordlist)
+```
+
+We can interpret these results as follows: the average value of the word list measure differs on average from the arithmetic mean by 5.12.
+
+3.  Quantile
+
+Quantiles are such values of a feature that divide the studied community into specific, equal parts in terms of numbers. They are used to designate interquartile range. 
+
+Interquartile Range is a measure that tells a lot about the population, as 50% (i.e. exactly a half) of the studied objects fall within these limits. The larger the quartile range, the more diverse the statistical feature. A half of the quartile range is commonly called the quarter deviation [[6]](#[6]). In R we can calculate quantiles using the `quantile()` function and the interquartile range using the `IQR()` function.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+# Calculate quantiles
+quantile(word_list$wordlist)
+# Calculate the interquartile range
+IQR(word_list$wordlist)
+```
+
+We can see that 50% of the children got a score between 27 and 33.
+
+In R to show descriptive statistics together we can use one of many built-in functions. We will provide some of them below.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+# Summary function
+summary(word_list$wordlist)
+
+# Stat.desc function
+library(pastecs)
+stat.desc(word_list$wordlist)
+
+# Describe function from psych package
+library(psych)
+describe(word_list$wordlist)
+```
+
+
+## <a id="Hypothesis testing"></a>Hypothesis testing
+
+Hypothesis testing is an extremely important, but also a relatively simple statistical tool that is useful in all areas of life. It allows you to draw conclusions about an entire population on the basis of a sample. When testing a statistical hypothesis, we must start by identifying a null hypothesis and an alternative hypothesis. We mark our tested observation as the null hypothesis H~0~, and mark any other acceptable event as the alternative hypothesis H~1~.
+
+Imagine you surveyed a sample of lawyers about their interest in statistical tests. 250 people replied that they were interested in statistical tests, and 250 were not fascinated. We can therefore make the null hypothesis that 50% of lawyers are interested in statistical testing. An alternative hypothesis in the most general version may be that it is not true that 50% of lawyers are interested in statistical tests. Then, using statistical tests, we answer the question whether the observation we have made is true or not, i.e. whether we fail to reject a null hypothesis or we have to reject it.
+
+Our research is done on the basis of a sample, not an entire population, so we have to take into account that they may be incorrect. In general, one of four situations can happen when testing a hypothesis:
+
+| Decision / Reality | H~0~             | H~1~             |
+|--------------------|------------------|------------------|
+| H~0~               | Correct decision | Error (type I)   |
+| H~1~               | Error (type II)  | Correct decision |
+
+So we can make 2 kinds of an error:
+
+-   Type 1 error - when we rejected the null hypothesis that was true;
+-   Type 2 error - when the null hypothesis was not rejected even though it is false.
+
+When constructing a statistical test, we strive to control the first type of error. We set a maximum probability (significance level) below which we accept the first type of error [we denote $\alpha$, most often it is 0.05]. We construct a test so that the null hypothesis is held unless the trial supports H~1~ strongly enough. We can compare it to a criminal trial [[8]](#[8]): *A criminal trial requires that you establish "beyond a reasonable doubt" that the defendant did it. All of the evidentiary rules are (in theory, at least) designed to ensure that there's (almost) no chance of wrongfully convicting an innocent defendant. The trial is designed to protect the rights of a defendant: as the English jurist William Blackstone famously said, it is "better that ten guilty persons escape than that one innocent suffer." In other words, a criminal trial doesn't treat the two types of error in the same way\~... punishing the innocent is deemed to be much worse than letting the guilty go free*.
+
+The test statistic plays an extremely important role in the construction of a statistical test. It is a random variable, the value of which is calculated using the data from the sample. Depending on its value, we make a decision not to reject or reject the H~0~ hypothesis in favor of the H~1~ hypothesis. The test statistic must be a variable which distribution, assuming that H~0~ is true, is known. We calculate the critical region for it - those values of the test statistic at which we reject the null hypothesis. However, we will reject the null hypothesis both for the critical values (which are the limit for accepting the hypothesis) and for values lying far from the area of non-rejection. In order to solve this problem, the p-value is used. It is the lowest significance level at which the observed value of a test statistic leads to the rejection of the null hypothesis. Put simply, if the p-value is \<= $\alpha$, then the null hypothesis must be rejected, otherwise we fail to reject it. The smaller the p-value, the stronger the belief that the null hypothesis is false.
+
+Summarizing, in order to verify a hypothesis, we should carry out the following steps:
+
+1)  Establish a null and alternative hypotheses,
+2)  Determine a level of significance,
+3)  Select a test statistic,
+4)  Establish a critical region,
+5)  Make a decision.
+
+Sounds difficult? In fact, if we use any statistical package, then steps 3 and 4 are performed for us automatically. We will now present the most important statistical tests using examples in R.
+
+## <a id="Statistical tests for categorical variables"></a>Statistical tests for categorical variables
+
+Statistical tests for categorical variables and numerical variables differ in their design. First, we'll introduce statistical tests for categorical variables. This tests are often used to analyze surveys.
+
+### <a id="The $\chi^2$ test of independence"></a>The $\chi^2$ test of independence
+
+We use this test when we want to check if there are any connections between nominal variables. Always the hypotheses for this test are as follows:
+
+H~0~: The tested variables are independent
+
+H~1~: The tested variables are not independent.
+
+We will show how this test works based on the R `chi-squared help` file example.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+#Create sample data in tabular form
+M <- as.table(rbind(c(762, 327, 468), c(484, 239, 477)))
+dimnames(M) <- list(gender = c("F", "M"),
+                    party = c("Democrat","Independent", "Republican"))
+```
+
+```{r, echo=FALSE}
+kable(M)
+```
+
+We have table (named M) that contains gender and political party preference. We want to check if there is any connection between a gender and voting preferences. So our hypotheses are as follow:
+
+H~0~: Gender and political party preference are independent
+
+H~1~: Gender and political party preference are not independent (a gender is associated with political party preference).
+
+To perform this test in R we use the `chisq.test()` function.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+#Perform Chi-Square Test of Independence
+(result <- chisq.test(M))
+```
+
+We can see that the p-value is very small and especially that it is less than 0,05 so we can we can safely reject the null hypothesis and conclude that a gender is associated with political party preference.
+
+
+### <a id="The $\chi^2$ test of goodness"></a>The $\chi^2$ test of goodness
+
+We use this test when we want to verify the hypothesis that the probability distribution of a tested feature is a distribution of a certain type. We will introduce this test based on the same data as previously, but limited to the female gender only.
+
+Imagine there are two views on a women's political preferences. The first says that women vote for all options with the same probability, the second says that women vote for Democrats with a probability of 0.5, and for the rest of the options with a probability of 0.2 and 0.3 respectively. Based on our sample of data, we will check which view is true.
+
+Firstly, we need to check the form of our data. We will create the vector of our observed values and two vectors of expected values.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+#Create sample data in vectors form
+observed<-c(762,327,468)
+expected_1<-c(1/3, 1/3, 1/3)
+expected_2<-c(0.5, 0.2, 0.3)
+```
+
+When checking the first view, we have the following hypotheses:
+
+H~0~: All options are chosen with equal probability
+
+H~1~: At least one of the choices probabilities isn't 1/3.
+
+To perform this test in R we also use the `chisq.test()` function but with our vector data.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+#Perform Chi-Square Test of goodness for the first views
+(result_1<-chisq.test(observed, p = expected_1))
+```
+
+We can see that p-value is very small and especially that is less than 0,05 so we can safely reject the null hypothesis and conclude that women don't vote for all options with the same probability. Let's see what we get for the second view.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+#Perform Chi-Square Test of goodness for the second views
+(result_2<-chisq.test(observed, p = expected_2))
+```
+
+Now p-value is greater than 0.05 so we can't reject the null hypothesis (but remember that this views was only our assumption).
+
+### <a id="The McNemar test"></a>The McNemar test
+
+The McNemar test is a non-parametric statistical test for comparing two dependent samples in which the variables are nominal. Always the hypotheses for this test are as follows:
+
+H~0~: There are no significant differences between the tested values
+
+H~1~: There are differences between the tested values.
+
+We will show how this test works based on the R `mcnemar.test help` file example.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+#Create sample data in the form of a contingency table
+Performance <- 
+matrix(c(794, 86, 150, 570),
+       nrow = 2,
+       dimnames = list("1st Survey" = c("Approve", "Disapprove"),
+                       "2nd Survey" = c("Approve", "Disapprove")))
+```
+
+```{r, echo=FALSE}
+Performance
+```
+
+We have data about the approval of the President's performance in the office in two surveys, one month apart, for a random sample of 1600 voting-age Americans. We want to check if the first survey has the same result as the second survey. To test this we will use the `mcnemary.test()` function:
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+#Perform McNemar Test 
+(result <- mcnemar.test(Performance))
+```
+
+We can see that the p-value is very small and especially that it is less than 0,05 so we can safely reject the null hypothesis and conclude that there are differences between the results obtained in the first and second survey.
+
+## <a id="Statistical tests for numerical variables"></a>Statistical tests for numerical variables
+
+Statistical tests for numerical variables rely mainly on comparing means between variables. In these tests, we assume that the data are approximately normally distributed. We can check it in R using the `shapiro.test()` function. Hypothesis are as follows:
+
+H~0~: The data are normally distributed
+
+H~1~: The data are not normally distributed.
+
+### <a id="One-sample t Test"></a>One-Sample t Test
+
+We use this test when we want to verify the hypothesis that there is no effective difference between the mean of our sample and the mean of whole population. In this test, the alternative hypothesis can take one of three forms:
+
+1)  There is an effective difference between the observed mean and the hypothesized mean (this is two-sided hypothesis),
+
+2)  Observed mean is larger than the hypothesized mean (one-sided),
+
+3)  Observed mean is smaller than the hypothesized mean (one-sided).
+
+We will introduce this test based on the example from [[9]](#[9]).
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+#Create data
+presidents=c(70.5,72,76,71.5,72,69.5,73,74,74,71.5,73,75,72)
+print(presidents)
+```
+
+We have data about heights of 13 US presidents during the TV era. According to data published by the Centers for Disease Control and Prevention (CDC), the average height for American men 20 years old and up is 69.1 inches. We want to check if there is a significant difference between the average height of presidents and the average height of the general male population. To test this we will use the `t.test()` function.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+# Check normality of data
+(shapiro.test(presidents))
+
+#Perform two-sided t-test 
+(result <- t.test(presidents, mu=69.1))
+```
+
+We can see that the p-value is very small and especially that it is less than 0,05 so we can safely reject the null hypothesis and conclude that there is the difference between the average height of presidents and the average height of the general male population. What's more, we can see that 95% confidence interval is: (71.52490, 73.70586) which means that with 95% confidence the next president's height will be between 71.5 and 73.7 inches tall. We can check the one-sided hypothesis.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+#Perform one-sided t-test 
+(result <- t.test(presidents, mu=69.1, alternative = "greater"))
+```
+
+As we assumed, we can reject the null hypothesis and say that presidents are significantly taller than the average American adult males.
+
+### <a id="The independent samples t test"></a>The independent samples t test
+
+We perform this test when we have two independent samples and we want to compare whether they come from populations with the same mean. We assume that that the variance of data in the different groups should be the same. Otherwise, we can use the Welch's test. We will introduce these tests based on the `USArrests` dataset. 
+
+```{r, echo=FALSE}
+kable(head(USArrests))
+```
+
+This dataset contains statistics, in arrests per 100,000 residents for assault, murder, and rape in each of the 50 US states in 1973. Also given is the percent of the population living in urban areas. We will test the common statement that there are, on average, less rapes in less urbanized regions.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+#Create data
+library(dplyr)
+USArrests %>%
+  mutate(type=case_when (UrbanPop >= 72 ~ "More_urbanized", UrbanPop < 72 ~ "Less_urbanized")) ->USArrests_by_urbanpop
+```
+
+To test this we will use the `t.test()`function. If we set the value of var.equal to TRUE, we get t-test. Determining the value of var.equal to FALSE we use the Welch's test.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+# Check normality of data
+USArrests_by_urbanpop %>%
+ group_by(type) %>%
+ summarise(p.value = shapiro.test(Rape)$p.value)
+
+# Check variance 
+(bartlett.test(USArrests_by_urbanpop$Rape, USArrests_by_urbanpop$type))
+
+#Perform the independent samples t test 
+(result<-t.test(USArrests_by_urbanpop$Rape ~USArrests_by_urbanpop$type, alternative = "less", var.equal = TRUE))
+```
+
+As we assumed, we can reject the null hypothesis and say that there are, on average, less rapes in less urbanized regions.
+
+### <a id="The paired samples t test"></a>The paired samples t test
+
+We perform this test when we have to compare means in two dependent samples. It has a similar application to the McNemary test but it is used for numerical variables. We will introduce this test based on our previous example but on murder data.
+
+Imagine that the penalties for criminals have been tightened in every state. We want to check if the tightening of penalties has affected the average level of murder in all states (no division by urbanization rate).
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+#Create data
+Before <- USArrests$Murder
+After <-c(5.71, 6.36, 7.02, 6.97, 5.37, 6.21, 6.92, 6.74, 5.36, 6.43, 5.81, 5.69, 5.94, 5.41, 7.48, 6.33, 6.66, 
+          7.86, 9.35, 6.37, 6.21, 5.35, 5.44, 4.84, 6.60, 4.52, 5.08, 6.26, 5.88, 7.78, 5.03, 5.78, 8.97, 7.51, 
+          5.66, 6.95, 5.59, 6.10, 6.48, 7.33, 8.19, 6.00, 4.32, 5.68, 6.28, 5.56, 7.91, 6.80, 5.37, 7.74)
+
+#Check normality of the data
+(shapiro.test(Before - After))
+
+#Perform the independent samples t test (two-sided)
+(result<-t.test(Before, After, paired =TRUE ))
+```
+
+The p-value is less than 0,05 so we can reject the null hypothesis and say that tightening of penalties has affected the average level of rapes. We can also check the one-sided hypothesis to make sure that before the rules were tightened, the average number of rapes was higher.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+#Perform the independent samples t test (one-sided)
+(result<-t.test(Before, After, paired =TRUE, alternative="greater" ))
+```
+
+As we assumed, we can reject the null hypothesis and say that the tightening of regulations has brought the expected results.
+
+### <a id="One-way ANOVA"></a> One-way ANOVA
+
+When we want to extend the t-test and check means in more than two populations we need to use a statistical tool which is called ANOVA (the analysis of variance). It is very useful and quite easy statistical tool. We need to have one dependent variable (with numerical character) and one factor with more than two levels. We also assume that the variance of data in the different groups should be the same. We have the following hypotheses:
+
+H~0~: The means of different groups are the same or they don't differ significantly
+
+H~1~: At least one sample mean is not equal to the others.
+
+Imagine that we have conducted a study among law students about which type of study gives the best results in exams. We have 3 different ways of learning:
+
+-   1 - going to lectures, studying at home and reading extra books,
+-   2 - going to lectures and studying at home,
+-   3 - only studying at home.
+
+We will check if there are significant differences between the average number of exam points obtained in each of these three groups.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+# Create dataset
+points <- c(66, 81, 52, 72, 77, 71, 60, 58, 70, 68,
+            69, 89, 75, 85, 86, 88, 70, 74, 67, 70,  
+            62, 60, 79, 62, 72, 60, 85, 65, 75, 69)
+
+ways_of_learning <- factor(c(rep(1:3, each=10)))
+exam<-data.frame(ways_of_learning, points)
+plot(exam)
+```
+
+As we can see, we will most likely reject the null hypothesis because we observe large differences between first and third groups. Let's check it. We will use the `aov()` function.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+#Check normality and variance of data
+exam %>% 
+  group_by(ways_of_learning)  %>% 
+  summarise(mean=mean(points),
+            variance=var(points),
+            p.value = shapiro.test(points)$p.value)
+
+(bartlett.test(exam$points, exam$ways_of_learning))
+
+# Create one-way anova
+result <- aov(points~ways_of_learning,exam)
+summary(result)
+```
+
+As we assumed, we reject the null hypothesis which means that at least one sample mean is not equal to the others. But which one? Or maybe all of them? We can check it using post-hoc tests. We will show how to do it using the `TukeyHSD()` function and the `HSD.test()` function.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+library(agricolae)
+TukeyHSD(result)
+```
+
+The first column shows pairwise comparisons, in this case the two populations that are being compared. Next we can see the estimate of the mean difference between the groups. At the end there is the p-value. As we can see we have one groups combinations that differ: 2-1. We also see that the means of the groups combinations 3-1 and 3-2 don't differ significantly.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+library(agricolae)
+HSD.test(result, 'ways_of_learning', console=TRUE, group=TRUE)
+```
+In this test, we also see how the factors are divided into groups. We have two groups that are significantly different from each other (1 - b and 2 - a) and one that is similar to each of the previous ones (3 - ab).
+## <a id="Outliers"></a> Outliers {#outliers}
+
+If we want to carry out statistical analyses and tests, a very important element is the appropriate preparation of data. Outliers are an issue that we must pay attention to. But what is it and where does it come from? An outlier is an object that varies so much from other observations that there is a suspicion that it has been generated by another mechanism [[3]](#[3]). If there are any outliers in our data, they can significantly affect the obtained results. For example [[5]](#[5]):
+
+-   the presence of outliers can affect the normal distribution of the dataset which is a basic assumption in most of parametric hypothesis-based tests,
+-   the presence of outlier distort the mean and standard deviation of the dataset,
+-   in k-means clustering, the presence of outliers can significantly affect the clustering and may not give a well-separated cluster (more about k-means clustering will be included in the next workshop).
+
+In the example below, we will show how we can identify and eliminate outliers from our dataset.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+library(car)
+head(Florida)
+```
+
+We have data on votes by county in Florida for President in the 2000 election. We will only focus on the relationship between the number of votes on Bush and the number of votes on Bushanan. We will later use this data to create a simple linear regression model.
+
+The first thing we should do is to present the given data on a graph. A boxplot is useful because the circles symbol indicates observations that differ from the rest.
+
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+# Create a plot 
+library(gridExtra)
+plot_1<-ggplot(Florida,aes(BUSH,BUCHANAN))+
+geom_boxplot()
+
+plot_2<-ggplot(Florida,aes(BUCHANAN, BUSH))+
+geom_boxplot()
+
+grid.arrange(plot_1, plot_2, ncol=2)
+```
+
+We can see that the most likely maximum values are the outliers. There are no other circle symbols next to these observations. We can also draw the plot in a different way and read values of these observations.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+# Create a plot 
+library(plotly)
+ggplotly(ggplot(Florida,aes(BUSH,BUCHANAN))+
+geom_point())
+```
+
+To be sure that these are outliers, we can perform a statistical test. The most frequently used test for this purpose is the Grubb's test which allows to detect whether the highest or lowest value in a dataset is an outlier. 
+The Grubb's test requires the normality of the data. The hypotheses in this test are as follows:
+
+H~0~: The highest/lowest value is not an outlier
+
+H~1~: The highest/lowest value is an outlier.
+
+We can perform this test in R using the `grubbs.test()` function.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+# Check normality of data
+shapiro.test(Florida[,2])
+shapiro.test(Florida[,3])
+```
+
+For this data we can not perform the Grubb's test. Moreover, there are no simple and readily available tests for non-normally distributed data. We can now create a new dataset without outliers based on our previous analysis and see what it looks like in the graph.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+#Create new dataset
+election <- data.frame(X=Florida[,2],Y=Florida[,3])[-c(13,50),]
+
+# Create a plot
+ggplotly(ggplot(election,aes(X,Y))+
+geom_point())
+```
+
+
+## <a id="Statistical modeling"></a> Statistical modeling
+
+One of the most important part of statistics is a statistical modeling. We use statistical model to understand and describe a relationship between our observed variables. The most common purpose of a statistical model is to either learn something about reality by drawing inferences from data - possibly with the ulterior goal of making an informed practical decision - or to make predictions about unknown events (future, present or past unknowns) [[1]](#[1]).
+
+Simply, we can say that statistical modeling is a simplified, mathematically-formalized way to approximate reality (i.e. what generates your data) and optionally to make predictions from this approximation. The statistical model is the mathematical equation that is used [[4]](#[4]).
+
+The first thing that we have to do if we want to create or adjust the model to our data is to define the explanatory and the response variables. The response (dependent) variables are those whose variability we want to explain. Explanatory (independent) variables are those that are beyond our control. They are used to explain or predict the response variable.
+
+Once we know what relationship we want to investigate or describe, we can focus on selecting the appropriate model. We want to choose the model in such a way that it fits the data as well as possible, i.e. it explains as much variability as possible. It is quite a difficult task that requires some experience. But don't worry, there are many functions in R that automatically match the model to our data.
+
+There are certain rules that should be followed when choosing a model [[2]](#[2]):
+
+1)  A model should have as few parameters as possible,
+2)  Linear models are better than nonlinear models,
+3)  A model with fewer assumptions is better than the one with more.
+
+Today we will present the work of a statistical model based on the linear regression (the most important and simplest statistical model). In the next meeting, we will discuss other types of regression models and their application to prediction.
+
+## <a id="Simple linear regression"></a> Simple linear regression
+
+In the linear regression, we assume that the relationship between the dependent variable ($Y$) and the independent variable ($X$) is linear, i.e. we can describe it as:
+
+$Y = \beta_{0} + \beta_{1} X + \epsilon$
+
+where $\beta_{0}$ is the intercept term --- the expected value of $Y$ when $X = 0$, $\beta_{1}$ is the slope --- the average increase in $Y$ associated with a one-unit increase in $X$ and $\epsilon$ is the error of the estimate.
+
+What we want to do now is to find the best fit straight line through our data. We will not focus on the mathematical foundations of the linear regression. We can simply say that we do this by searching for the regression coefficient $\beta_{1}$ that minimizes the sum of the squares of the residuals. This method is called Least Squares Method (LS).
+
+We will show how simple the linear regression works using the previously presented subset of the `Florida` dataset (without outliers). Let's remind how our data is arranged.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+# Create a plot
+ggplot(election,aes(X,Y))+
+geom_point()
+```
+
+We remember that X is the number of votes for Bush and Y is the number of votes for Buschanan. As we can see, the data is arranged in a certain linear relationship. Let's fit the best linear regression model to our data.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+# Create simple linear regression model
+model.election <- lm(Y~X,election)
+summary(model.election)
+```
+
+First, let's look at the coefficients of our model. The p-value is very small (\<2e-16 (it is the scientific notation of 0.0000000000000002)), it means that we can reject the null hypothesis that the number of votes on X (Bush) has no effect on the number of votes on Y (Buschanan). What's more, the estimated value X is 4.404e-03 - it means that when the number of votes for X increases by one unit, the number of votes for Y will increase by 4.404e-03. We can also check the Multiple R-squared which represents the proportion of the variance in the response variable of a regression model that can be explained by the predictor variables. We have R\^2 = 0,8648 which means that the independent variable (X) describes 86% of the variability of the dependent variable (Y). It is quite good.
+
+Now we can add the regression line to our plot.
+
+```{r, include = TRUE, warning = FALSE, message = FALSE, error = FALSE}
+# Create a plot with regression line
+ggplot(election,aes(X,Y))+
+  geom_point()+
+  geom_smooth(method = 'lm', se = FALSE)
+```
+
+## <a id="Exercises"></a> Exercises
+1.  Compute descriptive statistics for `matrices` variable from `FamilyIQ` dataset.
+2.  Perform Chi-Square Test of Independence for `Iris` dataset. (Check only `Species` and `Sepal.Length`).
+3.  Perform Chi-Square Test of goodness for the following dataset: observed: 700, 557, 228 expected: 0.5, 0.4, 0.1
+4.  Perform McNemary test for the following data:
+-   Approve in 1st survey and approve in 2nd survey: 600
+-   Disapprove in 1st survey and approve in 2nd survey: 50
+-   Approve in 1st survey and Disapprove in 2nd survey: 380
+-   Disapprove in 1st survey and Disapprove in 2nd survey: 570
+5.  Perform proper statistical test to check if `height` variable from` woman` dataset comes from population with mean = 69.
+6.  Check based on `murder` variable from `USArrests` dataset if there are, on average, less murders in less urbanized regions. Split the data for more and less urbanized regions using UrbanProp>=72 and UrbanProp<72.
+7.  Let's imagine that after the tightening of penalties we have following level of murder: 14.2, 3.4, 3.2, 6.3, 9.5, 3.3, 3.0, 9.9, 5.5, 8.8, 4.3, 12.1, 17.0, 4.4, 8.8, 10.2, 8.3, 0.3, 2.1, 13.6, 9.7, 10.1, 8.8, 13.2, 3.5, 16.2, 8.5, 9.2, 13.2, 5.1, 2.6, 11.1, 0.3, 10.8, 8.2, 5.3, 4.1, 1.8, 3.0, 1.9, 13.2, 9.6, 8.8, 3.2, 12.2, 2.1, 11.7, 3.8, 19.0, 9.7. Based on  this data and `murder` variable from `USArrests` dataset  check if the tightening of penalties has affected the average level of murder in all states.
+8.  Check if there are significant differences between the average value of `Sepal.Width` in each of iris spacies. Use`iris` dataset.
+9.  The following results were obtained: 12, 34, 22, 14, 22, 17, 24, 22, 18, 14, 18, 12. Using the Grubb's test, check that the value 34 is an outlier.
+10. Perform a simple linear regression model for the relationship between dist and speed variables from `cars` dataset.
+
+
+## <a id="References"></a> References {#references}
+
+<a name="[1]"></a> [1] Franke, M. (2021). An Introduction to Data Analysis <https://michael-franke.github.io/intro-data-analysis/Chap-03-03-models-general.html#fn43>
+
+<a name="[2]"></a> [2] Górecki, T. (2011). Podstawy statystyki z przykładami w R. BTC.
+
+<a name="[3]"></a> [3] Górecki, T. (2021). "Data analysis" -- lectures. Adam Mickiewicz University in Poznań.
+
+<a name="[4]"></a> [4] <https://help.xlstat.com/6724-what-statistical-modeling> [Access: 2022.04.29]
+
+<a name="[5]"></a> [5] <https://www.reneshbedre.com/blog/find-outliers.html> [Access: 2022.04.29]
+
+<a name="[6]"></a> [6] <https://www.statystyczny.pl/jak-obliczamy-kwantyle/> [Access: 2022.04.29]
+
+<a name="[7]"></a> [7] [https://www.statystyczny.pl/srednio-na-jeza-czyli-srednia-arytmetyczna/](https://www.statystyczny.pl/srednio-na-jeza-czyli-srednia-arytmetyczna/?fbclid=IwAR2-Co0wFFDz8wf3GmylnDZQBAlbNXLfOifsftkem4LxwSjKIAvCEL17UEY){.uri} [Access: 2022.04.29]
+
+<a name="[8]"></a> [8] Navarro, D. (2015).Learning statistics with R: A tutorial for psychology students and other beginners. (Version 0.6.1). University of New South Wales, Sydney, Australia.
+
+<a name="[9]"></a> [9] Shang, Y. (2021). Making Sense of Data with R. <https://bookdown.org/yshang/book/>
