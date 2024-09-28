@@ -3,7 +3,7 @@
 In 2022, we had an incredible team that brought together even more amazing speakers to make our event truly AWESOME!
 
 **Our Team**:
-Łukasz Szoszkiewicz, Igor Gontarz, Wojciech Biernacki, Jędrzej Wydra
+Igor Gontarz (project manager), Łukasz Szoszkiewicz, Wojciech Biernacki, Jędrzej Wydra
 
 **Speakers**:
 Tomasz Górecki, Michał Kosiński, Monika Leszczyńska, Ineke Marshall, Michal Ovádek, David Reichel
